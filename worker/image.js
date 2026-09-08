@@ -43,7 +43,7 @@ function buildBodyGenerations({ prompt, params }) {
 
   // image 字段 — 按模型区分:
   //   gpt-image-2: 官方是数组(支持多图参考)
-  //   即梦3(doubao-seedream-3-0) / 其他: spec 里 image 是 string(单图 URL)
+  //   即梦3(doubao-seedream-5-0-260128) / 其他: spec 里 image 是 string(单图 URL)
   if (image) {
     if (model === 'gpt-image-2') {
       body.image = Array.isArray(image) ? image : [image];
@@ -52,8 +52,8 @@ function buildBodyGenerations({ prompt, params }) {
     }
   }
 
-  // 即梦3 (doubao-seedream-3-0) 专有参数: guidance_scale / watermark
-  if (model === 'doubao-seedream-3-0-t2i-250415') {
+  // 即梦3 (doubao-seedream-5-0-260128) 专有参数: guidance_scale / watermark
+  if (model === 'doubao-seedream-5-0-260128') {
     if (guidance_scale != null && guidance_scale !== '') body.guidance_scale = Number(guidance_scale);
     if (watermark != null && watermark !== '') body.watermark = watermark === 'true';
   }

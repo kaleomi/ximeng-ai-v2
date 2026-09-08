@@ -1,17 +1,15 @@
 // Supabase REST 封装 — Cloudflare Workers 版
 // 环境变量通过 setEnv(env) 注入（由 worker/index.js 调用）
-// anon key 是 publishable key（本就是公开给前端用的），内置为兜底默认值，
-// 避免 Cloudflare 未配置环境变量时无法访问数据库
+// ⚠️ key 只从环境变量读取（已在 Cloudflare 配置 VITE_SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY）
 let ENV = {};
 export function setEnv(env) { ENV = env || {}; }
 
 const DEFAULT_SUPABASE_URL = 'https://bdzaifcqzsymfypzxisn.supabase.co';
-const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_-bmRhT8HjvmNWf0J6XsVtQ_ATwxDIPn';
 
 export function supabaseConfig() {
   return {
     url: ENV.VITE_SUPABASE_URL || ENV.SUPABASE_URL || DEFAULT_SUPABASE_URL,
-    key: ENV.SUPABASE_SERVICE_ROLE_KEY || ENV.VITE_SUPABASE_ANON_KEY || ENV.SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY,
+    key: ENV.SUPABASE_SERVICE_ROLE_KEY || ENV.VITE_SUPABASE_ANON_KEY || ENV.SUPABASE_ANON_KEY || '',
   };
 }
 

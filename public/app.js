@@ -60,8 +60,7 @@ const ICON = {
 };
 const MODEL_META = {
   // ===== 图像 — 按次计费 (金币) =====
-  'doubao-seedream-3-0-t2i-250415': { icon: ICON.doubao,       desc: '豆包 Seedream 3.0',     success: 100, price: { type: 'flat', value: 5 } },
-  'doubao-seedream-4-0-250828':     { icon: ICON.doubao,       desc: '豆包 Seedream 4.0',     success: 100, price: { type: 'flat', value: 5 } },
+  'doubao-seedream-5-0-260128':     { icon: ICON.doubao,       desc: '即梦3 Seedream 5.0',     success: 100, price: { type: 'flat', value: 5 } },
   'gpt-image-2':                    { icon: ICON.openai,       desc: 'GPT Image 2 · 1k/2k/4k', success: 97.1, price: { type: 'flat', value: 15 } },
   'gpt-image-2-all':                { icon: ICON.openai,       desc: 'GPT Image 2 逆向 · 1k',  success: 94.6, price: { type: 'flat', value: 5 } },
   'gemini-3.1-flash-lite-image':    { icon: ICON.gemini,       desc: 'Gemini Flash Lite · 1k', success: 99,   price: { type: 'flat', value: 10 } },
@@ -544,9 +543,8 @@ const PARAMS_ROW_DEFS = {
   },
   image: {
     type:    { label: '图像生成', options: [{v:'image',l:'图像生成'},{v:'video',l:'视频生成'}] },
-    model:   { label: '豆包 Seedream 3.0', options: [
-      {v:'doubao-seedream-3-0-t2i-250415',l:'豆包 Seedream 3.0'},
-      {v:'doubao-seedream-4-0-250828',l:'豆包 Seedream 4.0'},
+    model:   { label: '即梦3 Seedream 5.0', options: [
+      {v:'doubao-seedream-5-0-260128',l:'即梦3 Seedream 5.0'},
       {v:'gpt-image-2',l:'GPT Image 2'},
       {v:'gpt-image-2-all',l:'GPT Image 2 逆向'},
       {v:'gemini-3.1-flash-lite-image',l:'Gemini Flash Lite'},

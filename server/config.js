@@ -73,14 +73,13 @@ export const CONFIG = {
     },
     responseImageFields: ['b64_json', 'url'],
     defaults: {
-      model: 'doubao-seedream-3-0-t2i-250415',
+      model: 'doubao-seedream-5-0-260128',
       size: '1024x1024',
       n: 1,
     },
     // 每个模型对应哪个端点
     modelEndpoint: {
-      'doubao-seedream-3-0-t2i-250415': 'generations',
-      'doubao-seedream-4-0-250828':     'generations',
+      'doubao-seedream-5-0-260128':     'generations',
       'gpt-image-2':                    'generations',
       'gpt-image-2-all':                'generations',
       'gemini-3.1-flash-lite-image':    'chat',
@@ -89,12 +88,11 @@ export const CONFIG = {
     chatImagePattern: /!\[image\]\((https?:\/\/[^\s)]+)\)/i,
     paramSchema: [
       { key: 'model', label: '模型', type: 'select', options: [
-        'doubao-seedream-3-0-t2i-250415',
-        'doubao-seedream-4-0-250828',
+        'doubao-seedream-5-0-260128',
         'gpt-image-2',
         'gpt-image-2-all',
         'gemini-3.1-flash-lite-image',
-      ], default: 'doubao-seedream-3-0-t2i-250415' },
+      ], default: 'doubao-seedream-5-0-260128' },
       { key: 'size', label: '尺寸', type: 'select', options: [
         // gpt-image-2 官方合法尺寸: 最大边长≤3840 · 16倍数 · 长边:短边≤3:1 · 总像素 655360~8294400
         'auto', '1024x1024', '1536x1024', '1024x1536',
@@ -105,8 +103,8 @@ export const CONFIG = {
       ], default: '1024x1024' },
       { key: 'quality', label: '质量 (gpt-image-2)', type: 'select', options: ['auto', 'low', 'medium', 'high'], default: 'auto', showWhen: { field: 'model', value: 'gpt-image-2' } },
       { key: 'image', label: '参考图 (图生图)', type: 'image', multiple: false, default: '' },
-      { key: 'guidance_scale', label: '引导强度 (即梦3)', type: 'number', min: 0, max: 20, default: 5, showWhen: { field: 'model', value: 'doubao-seedream-3-0-t2i-250415' } },
-      { key: 'watermark', label: '水印 (即梦3)', type: 'select', options: ['true', 'false'], default: 'false', showWhen: { field: 'model', value: 'doubao-seedream-3-0-t2i-250415' } },
+      { key: 'guidance_scale', label: '引导强度 (即梦3)', type: 'number', min: 0, max: 20, default: 5, showWhen: { field: 'model', value: 'doubao-seedream-5-0-260128' } },
+      { key: 'watermark', label: '水印 (即梦3)', type: 'select', options: ['true', 'false'], default: 'false', showWhen: { field: 'model', value: 'doubao-seedream-5-0-260128' } },
       { key: 'n', label: '数量', type: 'number', min: 1, max: 4, default: 1 },
       { key: 'seed', label: '随机种子', type: 'number', default: -1 },
     ],
