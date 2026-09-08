@@ -1874,7 +1874,7 @@ async function openUserModal() {
     </div>
     <div style="background:rgba(124,92,245,0.12);border:1px solid rgba(139,92,246,0.3);border-radius:14px;padding:16px;margin-bottom:14px;text-align:center;">
       <div style="font-size:13px;color:#a5b0d6;">当前余额</div>
-      <div style="font-size:34px;font-weight:700;color:#c4b5fd;margin:4px 0;"><span id="userCoins">0</span> <span style="font-size:16px;">金币</span></div>
+      <div style="font-size:34px;font-weight:700;color:#fbbf24;margin:4px 0;"><span id="userCoins">0</span> <span style="font-size:16px;">金币</span></div>
       <div id="userName" style="font-size:13px;color:#8b93b8;"></div>
     </div>
     <div style="font-size:14px;color:#eef2ff;margin:14px 0 6px;">充值卡密</div>
@@ -1891,18 +1891,28 @@ async function openUserModal() {
   `);
   $('#userClose').addEventListener('click', () => overlay.remove());
   $('#logoutBtn').addEventListener('click', () => { clearAuth(); applyUserToUI(null); showStatus('已退出登录', 'success'); overlay.remove(); });
+
+  // 填充真实余额（先本地缓存值,再拉最新）
+  const setCoinsUI = (coins) => {
+    const el = $('#userCoins');
+    if (el && coins != null) el.textContent = coins;
+    const nm = $('#userName');
+    if (nm && currentUser) nm.textContent = (currentUser.nickname || currentUser.username) + (currentUser.role === 'admin' ? '（管理员）' : '');
+  };
+  if (currentUser) { setCoinsUI(currentUser.coins); }
+
   $('#redeemBtn').addEventListener('click', async () => {
     const key = ($('#redeemKey').value || '').trim();
     if (!key) { showStatus('请输入卡密', 'error'); return; }
     const r = await fetch('/api/coins/redeem', { method: 'POST', headers: { 'Content-Type': 'application/json', ...apiAuthHeaders() }, body: JSON.stringify({ key }) });
     const d = await r.json();
-    if (d.ok) { showStatus(`兑换成功 +${d.added} 金币`, 'success'); if (currentUser) currentUser.coins = d.coins; updateCoinBadge(); loadCoinLogs(); }
+    if (d.ok) { showStatus(`兑换成功 +${d.added} 金币`, 'success'); if (currentUser) currentUser.coins = d.coins; setCoinsUI(d.coins); updateCoinBadge(); loadCoinLogs(); }
     else showStatus(d.error || '兑换失败', 'error');
   });
   $('#refreshCoins').addEventListener('click', async () => {
     const r = await fetch('/api/auth/me', { headers: { ...apiAuthHeaders() } });
     const d = await r.json();
-    if (d.ok && d.user) { applyUserToUI(d.user); showStatus('余额已刷新', 'success'); }
+    if (d.ok && d.user) { applyUserToUI(d.user); setCoinsUI(d.user.coins); showStatus('余额已刷新', 'success'); }
   });
 
   async function loadCoinLogs() {
@@ -1925,7 +1935,14 @@ async function openUserModal() {
     }
   }
   loadCoinLogs();
-  updateCoinBadge();
+  // 打开时自动刷新一次真实余额（保证显示最新, 不依赖缓存）
+  (async () => {
+    try {
+      const r = await fetch('/api/auth/me', { headers: { ...apiAuthHeaders() } });
+      const d = await r.json();
+      if (d.ok && d.user) { currentUser = d.user; setCoinsUI(d.user.coins); updateCoinBadge(); }
+    } catch { /* 忽略, 用缓存值 */ }
+  })();
 }
 
 // 恢复登录态（页面加载时）

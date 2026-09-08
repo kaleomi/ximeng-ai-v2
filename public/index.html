@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>熙梦AI</title>
-  <link rel="stylesheet" href="/style.css?v=20260831a" />
+  <link rel="stylesheet" href="/style.css?v=20260908a" />
   <style>
     /* ============================================================
        熙梦AI · 紫蓝极光玻璃主题
@@ -136,6 +136,27 @@
       background: rgba(138,92,245,0.25) !important;
       border-color: rgba(138,92,245,0.5) !important;
       color: #fff !important;
+    }
+
+    /* ===== 右上角金币徽章（金色醒目）===== */
+    .coin-badge {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 3px !important;
+      margin-left: 8px !important;
+      padding: 2px 9px !important;
+      border-radius: 999px !important;
+      background: linear-gradient(135deg, rgba(255,200,80,0.22), rgba(255,160,40,0.15)) !important;
+      border: 1px solid rgba(255,190,80,0.45) !important;
+      color: #ffd98a !important;
+      font-size: 12.5px !important;
+      font-weight: 700 !important;
+      box-shadow: 0 0 10px rgba(255,180,60,0.15) !important;
+    }
+    .coin-badge:hover {
+      background: linear-gradient(135deg, rgba(255,200,80,0.35), rgba(255,160,40,0.25)) !important;
+      border-color: rgba(255,190,80,0.7) !important;
+      color: #ffe3a1 !important;
     }
 
     /* ===== 输入框内部：图标按钮（圆形）===== */
@@ -466,8 +487,7 @@
     </div>
     <div class="topbar-right">
       <button id="openApiBtn" class="topbar-btn">🌐 API</button>
-      <button id="userBtn" class="topbar-btn" title="登录/账户">👤 <span id="userNameText">登录</span></button>
-      <span id="coinBadge" class="coin-badge" style="display:none">🪙 <span id="coinText">0</span></span>
+      <button id="userBtn" class="topbar-btn" title="登录/账户">👤 <span id="userNameText">登录</span><span id="coinBadge" class="coin-badge" style="display:none">🪙 <span id="coinText">0</span></span></button>
       <button id="openHistoryBtn" class="topbar-btn" title="历史记录">🕘 历史</button>
     </div>
   </header>
@@ -550,8 +570,9 @@
 
   <div id="status" class="status-toast" hidden></div>
 
-  <script src="/fluid-canvas.js?v=20260831a"></script>
-  <script src="/app.js?v=20260831a"></script>
+  <script src="/fluid-canvas.js?v=20260908a"></script>
+  <script src="/app.js?v=20260908a"></script>
 </body>
 </html>
+
 
