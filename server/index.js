@@ -137,7 +137,30 @@ function getUserFromReq(req) {
 }
 
 // 按模型返回积分价格（可按需调整）
-function coinCostFor({ type, model, flavor }) {
+// 即梦官方积分表(1积分=1金币):
+//   2.5:       480P=12/秒 · 720P=26/秒 · 1080P=64/秒
+//   2.0 Pro:   720P=14/秒 · 1080P=33/秒 · 4k=80/秒
+//   2.0 mini:  仅 720P = 9/秒
+//   2.0 Fast:  仅 720P = 5/秒
+const SEEDANCE_RATE = { '480P': 12, '720P': 26, '1080P': 64 }; // 2.5
+const SEEDANCE_PRO_RATE = { '720P': 14, '1080P': 33, '4k': 80 }; // 2.0 Pro
+const SEEDANCE_MINI_RATE = { '720P': 9 }; // 2.0 mini
+const SEEDANCE_FAST_RATE = { '720P': 5 }; // 2.0 Fast
+function seedanceRateFor(model) {
+  if (model === 'doubao-seedance-2-0-260128') return SEEDANCE_PRO_RATE;
+  if (model === 'doubao-seedance-2.0-mini') return SEEDANCE_MINI_RATE;
+  if (model === 'doubao-seedance-2-0-fast-260128') return SEEDANCE_FAST_RATE;
+  return SEEDANCE_RATE;
+}
+function videoCost(model, quality, secs) {
+  const table = seedanceRateFor(model);
+  const q = Object.keys(table).includes(quality) ? quality : Object.keys(table)[0];
+  const rate = table[q];
+  const s = Math.max(1, Number(secs) || 5);
+  return rate * s;
+}
+
+function coinCostFor({ type, model, flavor, params }) {
   if (type === 'image') {
     if (model && model.includes('gpt-image-2-all')) return CONFIG.coins.gptAll || 5;
     if (model && model.includes('gpt-image-2')) return CONFIG.coins.gpt || 15;
@@ -145,7 +168,8 @@ function coinCostFor({ type, model, flavor }) {
     return CONFIG.coins.doubaoImage || 5;
   }
   if (flavor === 'runninghub') return CONFIG.coins.runninghub || 30;
-  return CONFIG.coins.video || 30;
+  // Seedance 视频: 按即梦积分表(模型×分辨率×时长)
+  return videoCost(model, params?.quality, params?.duration);
 }
 
 const server = http.createServer(async (req, res) => {
@@ -238,7 +262,8 @@ const server = http.createServer(async (req, res) => {
       const body = await readJsonBody(req);
       const { flavor, ...rest } = body;
       let deducted = null;
-      const cost = coinCostFor({ type: 'video', flavor });
+      const model = body.params?.model || rest.params?.model;
+      const cost = coinCostFor({ type: 'video', model, flavor, params: body.params || rest.params });
       if (user) {
         deducted = await atomicDeductCoins(user.id, cost, flavor === 'runninghub' ? 'RunningHub 工作流' : '视频生成');
         if (!deducted.success) return sendErr(res, 403, deducted.error);

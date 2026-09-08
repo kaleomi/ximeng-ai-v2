@@ -64,12 +64,12 @@ const MODEL_META = {
   'gpt-image-2':                    { icon: ICON.openai,       desc: 'GPT Image 2 · 1k/2k/4k', success: 97.1, price: { type: 'flat', value: 2 } },
   'gpt-image-2-all':                { icon: ICON.openai,       desc: 'GPT Image 2 逆向 · 1k',  success: 94.6, price: { type: 'flat', value: 1 } },
   'gemini-3.1-flash-lite-image':    { icon: ICON.gemini,       desc: 'Gemini Flash Lite · 1k', success: 99,   price: { type: 'flat', value: 2 } },
-  // ===== 视频 — 按次计费 (金币) =====
-  'doubao-seedance-2.5':            { icon: ICON.volcengine,   desc: 'Seedance 2.5',           success: 100, price: { type: 'flat', value: 30 } },
-  'doubao-seedance-2-0-260128':     { icon: ICON.volcengine,   desc: 'Seedance 2.0 Pro',       success: 99,  price: { type: 'flat', value: 30 } },
-  'doubao-seedance-2-0-fast-260128':{ icon: ICON.volcengine,   desc: 'Seedance 2.0 Fast',      success: 99,  price: { type: 'flat', value: 30 } },
-  'doubao-seedance-2.0-mini':       { icon: ICON.volcengine,   desc: 'Seedance 2.0 Mini',      success: 98,  price: { type: 'flat', value: 30 } },
-  'runninghub-workflow':            { icon: ICON.runninghub,   desc: 'RunningHub AI App 工作流', success: 99, price: { type: 'flat', value: 30 } },
+  // ===== 视频 — 按即梦积分表计费 (金币, 1积分=1金币) =====
+  'doubao-seedance-2.5':            { icon: ICON.volcengine,   desc: 'Seedance 2.5',           success: 100, price: { type: 'seedance' } },
+  'doubao-seedance-2-0-260128':     { icon: ICON.volcengine,   desc: 'Seedance 2.0 Pro',       success: 99,  price: { type: 'seedance' } },
+  'doubao-seedance-2-0-fast-260128':{ icon: ICON.volcengine,   desc: 'Seedance 2.0 Fast',      success: 99,  price: { type: 'seedance' } },
+  'doubao-seedance-2.0-mini':       { icon: ICON.volcengine,   desc: 'Seedance 2.0 Mini',      success: 98,  price: { type: 'seedance' } },
+  'runninghub-workflow':            { icon: ICON.runninghub,   desc: 'RunningHub AI App 工作流', success: 99, price: { type: 'rh' } },
 };
 
 // ============== 厂商分组 (左侧筛选) ==============
@@ -165,11 +165,48 @@ function iconSeedance() {
 
 
 
-// 计算当前选择的预估费用(金币) — 1元=10金币
+// 计算当前选择的预估费用(金币) — 1积分=1金币
+// 即梦官方积分表(按模型×分辨率×时长, 线性):
+//   2.5:       480P=12/秒 · 720P=26/秒 · 1080P=64/秒
+//   2.0 Pro:   720P=14/秒 · 1080P=33/秒 · 4k=80/秒
+//   2.0 mini:  仅 720P = 9/秒
+//   2.0 Fast:  仅 720P = 5/秒
+const SEEDANCE_RATE = { '480P': 12, '720P': 26, '1080P': 64 }; // 2.5
+const SEEDANCE_PRO_RATE = { '720P': 14, '1080P': 33, '4k': 80 }; // 2.0 Pro
+const SEEDANCE_MINI_RATE = { '720P': 9 }; // 2.0 mini
+const SEEDANCE_FAST_RATE = { '720P': 5 }; // 2.0 Fast
+
+function seedanceRateFor(model) {
+  if (model === 'doubao-seedance-2-0-260128') return SEEDANCE_PRO_RATE;
+  if (model === 'doubao-seedance-2.0-mini') return SEEDANCE_MINI_RATE;
+  if (model === 'doubao-seedance-2-0-fast-260128') return SEEDANCE_FAST_RATE;
+  return SEEDANCE_RATE;
+}
+// 分辨率选项按模型联动
+function seedanceQualityOptions(model) {
+  return Object.keys(seedanceRateFor(model));
+}
+function videoCost(model, quality, secs) {
+  const table = seedanceRateFor(model);
+  const q = Object.keys(table).includes(quality) ? quality : Object.keys(table)[0];
+  const rate = table[q];
+  const s = Math.max(1, Number(secs) || 5);
+  return rate * s;
+}
+
 function calcPrice() {
   const meta = MODEL_META[state.model];
-  if (!meta) return { amount: 5, label: '5 金币' };
-  const amount = meta.price.value || 5;
+  if (!meta) return { amount: 3, label: '3 金币' };
+  // 视频(非 RunningHub): 按即梦积分表(分辨率×时长)
+  if (state.type === 'video' && state.model !== 'runninghub-workflow') {
+    const q = getCurrentParamValue('quality') || '720P';
+    const secs = Number(getCurrentParamValue('duration')) || 5;
+    const table = seedanceRateFor(state.model);
+    const effQ = Object.keys(table).includes(q) ? q : Object.keys(table)[0];
+    const amount = videoCost(state.model, q, secs);
+    return { amount, label: `${amount} 金币`, tier: `${effQ} · ${secs}s (${table[effQ]} 金币/秒)` };
+  }
+  const amount = meta.price.value || 3;
   return { amount, label: `${amount} 金币` };
 }
 
@@ -458,13 +495,14 @@ function collectModelItems() {
 }
 
 function priceFor(m) {
-  // 按卡片自己的模型显示单价(金币) — 1元=10金币
+  // 按卡片自己的模型显示单价(金币) — 1积分=1金币
   const meta = MODEL_META[m.id];
   if (!meta) return '?';
   const p = meta.price;
   if (p.type === 'rh') return '按工作流计费';
   if (p.type === 'per_second') return `${p.value * 10} 金币/秒`;
   if (p.type === 'per_token') return `${p.value * 10} 金币/1M`;
+  if (p.type === 'seedance') return '26 金币/秒';
   return `${p.value || 0} 金币`;
 }
 
@@ -653,7 +691,18 @@ function renderParamsRow() {
     if (key === 'size' && type === 'image') {
       def = { ...def, options: _imageSizeOptions() };
     }
-    const val = cur[key] ?? (def.type === 'slider' ? def.min : (type==='video' && key==='quality' ? '720P' : def.options && def.options[0]?.v || def.options?.[0]));
+    // 视频: 分辨率选项按当前模型联动(2.5→480P/720P/1080P; Pro→720P/1080P/4k; mini/Fast→仅720P)
+    if (key === 'quality' && type === 'video') {
+      const m = saved[type]?.model || defs.model?.options?.[0]?.v || state.model;
+      const qs = seedanceQualityOptions(m);
+      def = { ...def, options: qs.map((q) => ({ v: q, l: q + (q === '720P' ? ' ✦' : '') })) };
+    }
+    let val = cur[key] ?? (def.type === 'slider' ? def.min : (type==='video' && key==='quality' ? '720P' : def.options && def.options[0]?.v || def.options?.[0]));
+    // 视频分辨率: 已选值不在当前模型选项里时回退到第一个(如 4k → mini 时回退 720P)
+    if (key === 'quality' && type === 'video') {
+      const opts = _normOpts(def.options).map(o => String(o.value));
+      if (!opts.includes(String(val))) val = opts[0] || '720P';
+    }
     const pill = document.createElement('button');
     pill.className = 'param-pill';
     pill.dataset.key = key;
