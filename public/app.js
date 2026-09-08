@@ -483,13 +483,16 @@ function collectModelItems() {
       out.push({ id: m, label: m, flavor: null, provider: providerOf(m) });
     });
   } else if (state.type === 'video') {
+    // 取 ark(即梦官方) + runninghub；跳过 comfly(模型与 ark 重复, 避免 SD2.5 出现两次)
     const flavors = state.config?.video?.flavors || {};
-    Object.entries(flavors).forEach(([flv, cfg]) => {
+    for (const flv of ['ark', 'runninghub']) {
+      const cfg = flavors[flv];
+      if (!cfg) continue;
       const modelField = cfg.paramSchema?.find(p => p.key === 'model');
       (modelField?.options || [modelField?.default].filter(Boolean)).forEach((m) => {
         out.push({ id: m, label: m, flavor: flv, provider: providerOf(m) });
       });
-    });
+    }
   }
   return out;
 }
@@ -693,7 +696,7 @@ function renderParamsRow() {
     }
     // 视频: 分辨率选项按当前模型联动(2.5→480P/720P/1080P; Pro→720P/1080P/4k; mini/Fast→仅720P)
     if (key === 'quality' && type === 'video') {
-      const m = saved[type]?.model || defs.model?.options?.[0]?.v || state.model;
+      const m = state.model || saved[type]?.model || defs.model?.options?.[0]?.v;
       const qs = seedanceQualityOptions(m);
       def = { ...def, options: qs.map((q) => ({ v: q, l: q + (q === '720P' ? ' ✦' : '') })) };
     }
@@ -844,7 +847,11 @@ function _openParamPopover(anchorEl, key, def, type) {
         all[type] = { ...(all[type]||{}), [key]: o.value };
         localStorage.setItem('ai_media_params', JSON.stringify(all));
         if (key === 'type') state.type = o.value;
-        if (key === 'model') state.model = o.value;
+        if (key === 'model') {
+          state.model = o.value;
+          // 视频模型默认走 ark flavor（即梦官方格式），RunningHub 除外
+          if (state.type === 'video' && o.value !== 'runninghub-workflow') state.flavor = 'ark';
+        }
         closePopover();
         renderParamsRow();
         renderParamsPanel();
