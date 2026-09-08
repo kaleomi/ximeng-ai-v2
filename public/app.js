@@ -267,9 +267,12 @@ function startSuggestionCarousel() {
 }
 
 function bindEvents() {
-  // ===== API 设置弹窗 =====
+  // ===== API 设置弹窗（仅管理员可见, 按钮默认隐藏）=====
   const apiBtn = $('#openApiBtn');
-  if (apiBtn) apiBtn.addEventListener('click', openApiModal);
+  if (apiBtn) {
+    apiBtn.style.display = 'none';
+    apiBtn.addEventListener('click', openApiModal);
+  }
 
   // ===== 用户登录/账户 =====
   const userBtn = $('#userBtn');
@@ -1962,6 +1965,9 @@ function applyUserToUI(user, bonus = 0) {
   const nameEl = $('#userNameText');
   const badge = $('#coinBadge');
   const coinEl = $('#coinText');
+  const apiBtn = $('#openApiBtn');
+  // API 设置按钮: 仅管理员可见（暂不对外开放）
+  if (apiBtn) apiBtn.style.display = (user && user.role === 'admin') ? 'inline-block' : 'none';
   if (!user) {
     if (nameEl) nameEl.textContent = '登录';
     if (badge) badge.style.display = 'none';
