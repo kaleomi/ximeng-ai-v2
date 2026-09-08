@@ -3,9 +3,11 @@
 # 部署:     npx wrangler deploy
 # API key 部署: npx wrangler secret put API_KEY  (生产环境密钥)
 
-name = "ximeng-ai"
+name = "ximeng-ai-v2"
 main = "worker/index.js"
 compatibility_date = "2024-11-01"
+# nodejs_compat: 提供 Buffer/crypto 等 Node API（bcryptjs 需要）
+compatibility_flags = ["nodejs_compat"]
 
 # 静态前端 (public/) 由 Workers Assets 托管
 [assets]

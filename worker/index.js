@@ -40,11 +40,11 @@ function getAuthFromReq(request) {
 }
 
 // 从 Authorization 头取用户 token 载荷 (未登录返回 null)
-function getUserFromReq(request) {
+async function getUserFromReq(request) {
   const authHeader = request.headers.get('authorization') || '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
   if (!token) return null;
-  return verifyToken(token);
+  return await verifyToken(token);
 }
 
 // 按模型返回积分价格
@@ -88,7 +88,7 @@ export default {
     const url = new URL(request.url);
     const pathname = url.pathname;
     const auth = getAuthFromReq(request);
-    const user = getUserFromReq(request);
+    const user = await getUserFromReq(request);
 
     try {
       // ---- 认证 / 积分路由 ----

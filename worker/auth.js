@@ -1,7 +1,7 @@
 // 认证模块 — Cloudflare Workers 版（与 server/auth.js 逻辑一致）
 // 环境变量通过 setEnv(env) 注入（由 worker/index.js 调用）
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import { signToken as _sign, verifyToken as _verify } from './jwt.js';
 import { supabaseFrom, setEnv as setSupabaseEnv } from './supabase.js';
 
 let ENV = {};
@@ -13,10 +13,11 @@ export function setEnv(env) {
 const JWT_SECRET = () => ENV.JWT_SECRET || 'running-hub-secret-key-2024';
 
 export function signToken(user) {
-  return jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET(), { expiresIn: '7d' });
+  // 返回 Promise（jwt.js 用 Web Crypto 是异步的）
+  return _sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET());
 }
-export function verifyToken(token) {
-  try { return jwt.verify(token, JWT_SECRET()); } catch { return null; }
+export async function verifyToken(token) {
+  return _verify(token, JWT_SECRET());
 }
 
 export function genCode() { return String(Math.floor(100000 + Math.random() * 900000)); }
@@ -76,7 +77,7 @@ export async function registerUser({ username, password, nickname, email, code, 
       await supabaseFrom('coin_logs').insert({ user_id: inviterId, amount: 5, type: 'referral', description: `邀请好友 ${username} 注册奖励`, timestamp: Date.now() });
     }
   }
-  const token = signToken(user);
+  const token = await signToken(user);
   return { ok: true, user: { id: user.id, username: user.username, nickname: user.nickname, email: user.email, coins: user.coins || 0, role: user.role, invite_code: user.invite_code }, token };
 }
 
@@ -98,7 +99,7 @@ export async function loginUser({ username, password }) {
       await supabaseFrom('coin_logs').insert({ user_id: user.id, amount: bonusCoins, type: 'daily', description: `每日登录奖励 +${bonusCoins}`, timestamp: Date.now() });
     }
   }
-  const token = signToken(user);
+  const token = await signToken(user);
   return { ok: true, user: { id: user.id, username: user.username, nickname: user.nickname, email: user.email, coins, role: user.role, invite_code: user.invite_code, api_key: user.api_key || '', last_bonus_date: user.last_bonus_date }, token, bonusCoins };
 }
 
