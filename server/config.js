@@ -278,10 +278,10 @@ export const CONFIG = {
 
   // 积分价格（每次生成扣费，登录用户生效）
   coins: {
-    doubaoImage: 5,   // 豆包图像
-    gpt: 15,          // gpt-image-2 (2k/4k)
-    gptAll: 5,        // gpt-image-2-all (逆向 1k)
-    gemini: 10,       // gemini 图像
+    doubaoImage: 3,   // 即梦3 Seedream 5.0
+    gpt: 2,           // gpt-image-2
+    gptAll: 1,        // gpt-image-2-all (逆向 1k)
+    gemini: 2,        // gemini 图像
     video: 30,        // doubao-seedance 视频
     runninghub: 30,   // RunningHub 工作流
   },

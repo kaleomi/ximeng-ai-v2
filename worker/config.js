@@ -214,10 +214,10 @@ export function getConfig() {
 
     // 积分价格（与 server/config.js 一致）
     coins: {
-      doubaoImage: 5,
-      gpt: 15,
-      gptAll: 5,
-      gemini: 10,
+      doubaoImage: 3,
+      gpt: 2,
+      gptAll: 1,
+      gemini: 2,
       video: 30,
       runninghub: 30,
     },

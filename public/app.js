@@ -60,10 +60,10 @@ const ICON = {
 };
 const MODEL_META = {
   // ===== 图像 — 按次计费 (金币) =====
-  'doubao-seedream-5-0-260128':     { icon: ICON.doubao,       desc: '即梦3 Seedream 5.0',     success: 100, price: { type: 'flat', value: 5 } },
-  'gpt-image-2':                    { icon: ICON.openai,       desc: 'GPT Image 2 · 1k/2k/4k', success: 97.1, price: { type: 'flat', value: 15 } },
-  'gpt-image-2-all':                { icon: ICON.openai,       desc: 'GPT Image 2 逆向 · 1k',  success: 94.6, price: { type: 'flat', value: 5 } },
-  'gemini-3.1-flash-lite-image':    { icon: ICON.gemini,       desc: 'Gemini Flash Lite · 1k', success: 99,   price: { type: 'flat', value: 10 } },
+  'doubao-seedream-5-0-260128':     { icon: ICON.doubao,       desc: '即梦3 Seedream 5.0',     success: 100, price: { type: 'flat', value: 3 } },
+  'gpt-image-2':                    { icon: ICON.openai,       desc: 'GPT Image 2 · 1k/2k/4k', success: 97.1, price: { type: 'flat', value: 2 } },
+  'gpt-image-2-all':                { icon: ICON.openai,       desc: 'GPT Image 2 逆向 · 1k',  success: 94.6, price: { type: 'flat', value: 1 } },
+  'gemini-3.1-flash-lite-image':    { icon: ICON.gemini,       desc: 'Gemini Flash Lite · 1k', success: 99,   price: { type: 'flat', value: 2 } },
   // ===== 视频 — 按次计费 (金币) =====
   'doubao-seedance-2.5':            { icon: ICON.volcengine,   desc: 'Seedance 2.5',           success: 100, price: { type: 'flat', value: 30 } },
   'doubao-seedance-2-0-260128':     { icon: ICON.volcengine,   desc: 'Seedance 2.0 Pro',       success: 99,  price: { type: 'flat', value: 30 } },
@@ -162,20 +162,6 @@ function iconSeedance() {
 
 
 
-// gpt-image-2 按尺寸映射到 1k/2k/4k
-function gptImage2Tier(size) {
-  if (!size) return '1k';
-  const [w, h] = size.split('x').map(Number);
-  const max = Math.max(w || 0, h || 0);
-  if (max >= 2048) return '4k';
-  if (max >= 1024) return '2k';
-  return '1k';
-}
-const GPT_IMAGE_2_RATE = {
-  '1k': 0.06,   // default 分组
-  '2k': 0.30,   // gpt-image-2-official-mix
-  '4k': 0.30,
-};
 
 
 
