@@ -14,10 +14,6 @@ compatibility_flags = ["nodejs_compat"]
 directory = "./public"
 binding = "ASSETS"
 
-# 可选: 限制定时器/请求并发
-[limits]
-cpu_ms = 30000
-
 # 生产环境密钥请用 wrangler secret put 设置, 不要写在这里:
 #   API_KEY     → comfly API Key
 #   BASE_URL    → comfly Base URL (默认 https://ai.comfly.org)
