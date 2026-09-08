@@ -1,0 +1,32 @@
+# ===== 敏感文件（绝不提交）=====
+.env
+.dev.vars
+*.key
+*.pem
+
+# ===== 依赖 =====
+node_modules/
+
+# ===== Tokeny 内部 =====
+.tokeny/
+
+# ===== 其他项目（夏洛熙源码/压缩包，不入此仓库）=====
+_xialuoxi/
+夏洛熙工具箱发布版5.0.zip
+
+# ===== 临时文件 / 备份 / 调试 =====
+_backup_*/
+_tmp_*.py
+_index_bak.html
+image.png
+image_*.png
+*.log
+
+# ===== 素材/参考文件（不入仓库）=====
+tool-images/
+/index.html
+
+
+# ===== 系统 =====
+.DS_Store
+Thumbs.db

@@ -1,0 +1,19 @@
+{
+  "name": "ximeng-ai",
+  "private": true,
+  "version": "2.0.0",
+  "description": "熙梦AI — 图像/视频生成聚合工具 (Cloudflare Workers 版)",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "dev:node": "node server/index.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "wrangler": "^3.90.0"
+  }
+}

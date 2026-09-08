@@ -1,0 +1,20 @@
+# 复制为 .dev.vars, 用于本地 `npx wrangler dev`
+# 生产环境请用 `npx wrangler secret put 变量名` 设置, 不要提交到仓库!
+
+# comfly API Key (必填, 否则生成接口报错)
+API_KEY=sk-你的comfly-key
+
+# comfly Base URL (可选, 默认 https://ai.comfly.org)
+BASE_URL=https://ai.comfly.org
+
+# RunningHub 32位 API Key (可选, 视频的 RunningHub 工作流用)
+RH_API_KEY=你的runninghub-32位key
+
+# ---- 认证与积分 (与夏洛熙共用数据库) ----
+JWT_SECRET=running-hub-secret-key-2024
+VITE_SUPABASE_URL=https://bdzaifcqzsymfypzxisn.supabase.co
+VITE_SUPABASE_ANON_KEY=sb_publishable_-bmRhT8HjvmNWf0J6XsVtQ_ATwxDIPn
+# SUPABASE_SERVICE_ROLE_KEY=   # 可选: 生产建议填(高权限)
+
+# 开发模式: 设为 true 时 /api/auth/send-code 直接返回验证码(便于本地调试, 生产勿开)
+ALLOW_DEV_CODE=true

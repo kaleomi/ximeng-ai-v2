@@ -1,0 +1,26 @@
+# Cloudflare Workers 配置
+# 本地开发: npx wrangler dev
+# 部署:     npx wrangler deploy
+# API key 部署: npx wrangler secret put API_KEY  (生产环境密钥)
+
+name = "ximeng-ai"
+main = "worker/index.js"
+compatibility_date = "2024-11-01"
+
+# 静态前端 (public/) 由 Workers Assets 托管
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# 可选: 限制定时器/请求并发
+[limits]
+cpu_ms = 30000
+
+# 生产环境密钥请用 wrangler secret put 设置, 不要写在这里:
+#   API_KEY     → comfly API Key
+#   BASE_URL    → comfly Base URL (默认 https://ai.comfly.org)
+#   RH_API_KEY  → RunningHub 32位 API Key
+#   JWT_SECRET  → 认证签名密钥 (必须与夏洛熙一致: running-hub-secret-key-2024)
+#   VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY → 数据库连接
+#   SUPABASE_SERVICE_ROLE_KEY → 生产建议填(高权限读写)
+#   ALLOW_DEV_CODE → true 时 send-code 返回验证码(仅开发)

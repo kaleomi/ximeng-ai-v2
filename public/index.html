@@ -1,0 +1,557 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>熙梦AI</title>
+  <link rel="stylesheet" href="/style.css?v=20260831a" />
+  <style>
+    /* ============================================================
+       熙梦AI · 紫蓝极光玻璃主题
+       深蓝紫流体打底 + 半透明玻璃面板 + 紫青渐变强调
+       ============================================================ */
+    html, body { background: transparent !important; }
+    body { color: #eef2ff !important; }
+
+    /* 流体背景画布（最底层） */
+    #fluidCanvas {
+      position: fixed !important;
+      top: 0 !important; left: 0 !important;
+      width: 100% !important; height: 100% !important;
+      z-index: -1 !important;
+      pointer-events: none !important;
+      display: block !important;
+    }
+
+    /* ===== 中间画布：彻底透明，流体透出 ===== */
+    .canvas-wrap { background: transparent !important; padding: 16px !important; }
+    .canvas {
+      background: transparent !important;
+      background-image: none !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+    .canvas-empty { text-align: center !important; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
+
+    /* ===== 玻璃面板：蓝紫半透明 + 微光边框 + 柔和阴影（去掉内高光白线）===== */
+    .topbar, .sidebar, .params-panel, .prompt-card,
+    .model-item, .canvas-result {
+      background: linear-gradient(160deg, rgba(30,36,66,0.52), rgba(20,24,48,0.38)) !important;
+      -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+      backdrop-filter: blur(16px) saturate(140%) !important;
+      border: 1px solid rgba(140,150,220,0.16) !important;
+      box-shadow: 0 8px 32px rgba(8,6,30,0.35) !important;
+    }
+    /* 输入框文字区: textarea 无边框 */
+    #prompt { border: none !important; box-shadow: none !important; }
+    /* 附件区底部分隔线(白线来源) → 去掉 */
+    .prompt-attachments { border-bottom: none !important; }
+    /* 恢复 prompt-card 顶部边框 */
+    .prompt-card { border: 1px solid rgba(140,150,220,0.16) !important; }
+    /* bottom-bar 只是定位容器，去掉背景(避免出现直角半透明框) */
+    .bottom-bar { background: transparent !important; border: none !important; box-shadow: none !important; }
+    .topbar { border-left: none !important; border-top: none !important; border-right: none !important; border-bottom: 1px solid rgba(140,150,220,0.16) !important; }
+
+    /* 输入控件：玻璃内嵌，聚焦紫光 */
+    textarea, input, select {
+      color: #eef2ff !important;
+      background: rgba(18,22,42,0.55) !important;
+      border: 1px solid rgba(140,150,220,0.20) !important;
+      border-radius: 12px !important;
+      transition: border-color .2s, box-shadow .2s !important;
+    }
+    textarea:focus, input:focus, select:focus {
+      border-color: rgba(138,92,245,0.65) !important;
+      box-shadow: 0 0 0 3px rgba(138,92,245,0.18) !important;
+      outline: none !important;
+    }
+    textarea::placeholder, input::placeholder { color: #7c87ad !important; }
+
+    /* ===== 文字层次 ===== */
+    body, .topbar, .sidebar, .params-panel, .prompt-card,
+    .brand, .model-name, .canvas-title, .params-content,
+    .prompt-input-row, .prompt-params-row, .prompt-attachments,
+    .filter-provider, .footer-btn, .ref-content-btn, .at-btn,
+    .chip, .suggestion-chips, .history-modal, .dyn-modal,
+    .dyn-tab, .dyn-btn, .dyn-close, .api-modal, .popover-title {
+      color: #eef2ff !important;
+    }
+    .brand-sub, .model-desc, .canvas-sub, .param-group-label,
+    .type-tab, .balance, .ref-content-btn, .at-btn, label {
+      color: #a5b0d6 !important;
+    }
+
+    /* ===== 品牌 logo 渐变字 ===== */
+    .brand { font-weight: 800 !important; font-size: 19px !important; letter-spacing: 1px !important; }
+    .brand-icon {
+      background: linear-gradient(135deg, #8a5cf5, #38dafa) !important;
+      -webkit-background-clip: text !important;
+      background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+    }
+
+    /* ===== 中央标题渐变字 ===== */
+    .canvas-title {
+      font-size: 30px !important; font-weight: 800 !important; letter-spacing: 1px !important;
+      background: linear-gradient(120deg, #eef2ff, #b9a8ff 45%, #6bd8ff) !important;
+      -webkit-background-clip: text !important;
+      background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+    }
+
+    /* ===== 主按钮：紫→青渐变 ===== */
+    .send-btn, .primary-btn, .footer-btn, .dyn-btn {
+      background: linear-gradient(135deg, #8a5cf5, #4cc9f0) !important;
+      color: #fff !important;
+      border: none !important;
+      box-shadow: 0 4px 16px rgba(138,92,245,0.35) !important;
+    }
+    .send-btn:hover, .primary-btn:hover, .footer-btn:hover {
+      box-shadow: 0 6px 22px rgba(138,92,245,0.5) !important;
+      transform: translateY(-1px) !important;
+    }
+
+    /* ===== 选中/激活态：紫色光晕 ===== */
+    .type-tab.active, .model-item.active, .provider-active,
+    .filter-icon.active, .dyn-tab.active, .pill.active {
+      background: rgba(138,92,245,0.22) !important;
+      border-color: rgba(138,92,245,0.6) !important;
+      box-shadow: 0 0 0 1px rgba(138,92,245,0.35), 0 4px 14px rgba(138,92,245,0.25) !important;
+      color: #fff !important;
+    }
+
+    /* ===== 右上角按钮：玻璃胶囊 ===== */
+    .topbar-btn {
+      background: rgba(26,32,58,0.45) !important;
+      color: #c9d2f0 !important;
+      border: 1px solid rgba(140,150,220,0.20) !important;
+      border-radius: 999px !important;
+      padding: 6px 14px !important;
+      font-size: 13px !important;
+      font-weight: 500 !important;
+      cursor: pointer !important;
+      transition: all .18s !important;
+    }
+    .topbar-btn:hover {
+      background: rgba(138,92,245,0.25) !important;
+      border-color: rgba(138,92,245,0.5) !important;
+      color: #fff !important;
+    }
+
+    /* ===== 输入框内部：图标按钮（圆形）===== */
+    .ref-content-btn, .at-btn {
+      width: 34px !important;
+      height: 34px !important;
+      padding: 0 !important;
+      justify-content: center !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      background: rgba(26,32,58,0.45) !important;
+      color: #a5b0d6 !important;
+      border: 1px solid rgba(140,150,220,0.18) !important;
+      border-radius: 50% !important;
+      transition: all .15s !important;
+    }
+    .ref-content-btn:hover, .at-btn:hover {
+      background: rgba(138,92,245,0.25) !important;
+      border-color: rgba(138,92,245,0.5) !important;
+      color: #fff !important;
+    }
+    .at-btn { color: #b9a8ff !important; }
+    .at-btn .at-symbol { color: #8a5cf5 !important; font-size: 16px !important; }
+
+    /* ===== 参数 pill（底部 + 右侧）：玻璃胶囊 ===== */
+    .param-pill, .param-pill.active {
+      background: rgba(26,32,58,0.45) !important;
+      color: #c9d2f0 !important;
+      border: 1px solid rgba(140,150,220,0.18) !important;
+      border-radius: 18px !important;
+    }
+    .param-pill:hover {
+      background: rgba(138,92,245,0.22) !important;
+      border-color: rgba(138,92,245,0.5) !important;
+      color: #fff !important;
+    }
+    .param-pill.active {
+      background: rgba(138,92,245,0.28) !important;
+      border-color: rgba(138,92,245,0.6) !important;
+      color: #fff !important;
+      box-shadow: 0 0 0 1px rgba(138,92,245,0.35) !important;
+    }
+    .param-pill .caret { color: #7c87ad !important; }
+    .param-pill .star { color: #b9a8ff !important; }
+    .at-pill { color: #b9a8ff !important; }
+
+    /* ===== 上拉选择面板（popover）：深色玻璃 ===== */
+    .popover-panel {
+      background: linear-gradient(160deg, rgba(30,36,66,0.96), rgba(20,24,48,0.92)) !important;
+      border: 1px solid rgba(140,150,220,0.22) !important;
+      border-radius: 14px !important;
+      box-shadow: 0 16px 48px rgba(4,4,20,0.55) !important;
+    }
+    .popover-title { color: #a5b0d6 !important; }
+    .popover-option {
+      background: rgba(26,32,58,0.55) !important;
+      color: #c9d2f0 !important;
+      border: 1px solid transparent !important;
+    }
+    .popover-option:hover {
+      background: rgba(138,92,245,0.22) !important;
+      color: #fff !important;
+      border-color: rgba(138,92,245,0.4) !important;
+    }
+    .popover-option.selected {
+      background: linear-gradient(135deg, #8a5cf5, #4cc9f0) !important;
+      color: #fff !important;
+      border-color: transparent !important;
+    }
+    .popover-option .star { color: #b9a8ff !important; }
+    .popover-option.selected .star { color: #fff !important; }
+
+    /* ===== 尺寸/比例形状小图标(通用, 用在 pill 和 popover) ===== */
+    .ratio-icon {
+      display: inline-block !important;
+      border: 1.5px solid currentColor !important;
+      border-radius: 2px !important;
+      flex-shrink: 0 !important;
+      vertical-align: middle !important;
+      background: rgba(255,255,255,0.08) !important;
+    }
+    .param-pill .ratio-icon { opacity: 0.85 !important; }
+
+    /* ===== 中央示例提示词 chip：玻璃胶囊 + 切换动画 ===== */
+    .chip {
+      background: rgba(26,32,58,0.45) !important;
+      color: #c9d2f0 !important;
+      border: 1px solid rgba(140,150,220,0.18) !important;
+      border-radius: 20px !important;
+      padding: 8px 16px !important;
+      font-size: 12.5px !important;
+      cursor: pointer !important;
+      transition: all .18s !important;
+      animation: chipIn .4s ease-out !important;
+      backdrop-filter: blur(6px) !important;
+      -webkit-backdrop-filter: blur(6px) !important;
+    }
+    @keyframes chipIn {
+      from { opacity: 0; transform: translateY(8px) scale(0.95); }
+      to   { opacity: 1; transform: none; }
+    }
+    .chip:hover {
+      background: rgba(138,92,245,0.25) !important;
+      border-color: rgba(138,92,245,0.5) !important;
+      color: #fff !important;
+      box-shadow: 0 4px 14px rgba(138,92,245,0.25) !important;
+    }
+
+    /* ===== 右侧历史面板 ===== */
+    .params-content { gap: 0 !important; }
+    .history-panel-title {
+      font-size: 14px !important;
+      font-weight: 700 !important;
+      color: #eef2ff !important;
+      margin-bottom: 12px !important;
+      letter-spacing: 0.5px !important;
+    }
+    .history-panel-list {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 8px !important;
+      overflow-x: hidden !important;
+    }
+    .history-panel-item {
+      display: flex !important;
+      align-items: center !important;
+      gap: 10px !important;
+      padding: 6px !important;
+      border-radius: 10px !important;
+      background: rgba(26,32,58,0.42) !important;
+      border: 1px solid rgba(140,150,220,0.14) !important;
+      cursor: pointer !important;
+      transition: all .15s !important;
+      min-width: 0 !important;
+    }
+    .history-panel-item:hover {
+      background: rgba(138,92,245,0.18) !important;
+      border-color: rgba(138,92,245,0.4) !important;
+    }
+    .history-panel-thumb {
+      width: 48px !important;
+      height: 48px !important;
+      flex-shrink: 0 !important;
+      border-radius: 8px !important;
+      overflow: hidden !important;
+      background: rgba(24,28,52,0.7) !important;
+    }
+    .history-panel-thumb img,
+    .history-panel-thumb video {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      display: block !important;
+    }
+    .history-panel-audio {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    .history-panel-info {
+      flex: 1 !important;
+      min-width: 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 6px !important;
+    }
+    .history-panel-prompt {
+      font-size: 11px !important;
+      color: #a5b0d6 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+    .history-panel-actions {
+      display: flex !important;
+      gap: 4px !important;
+      justify-content: flex-end !important;
+    }
+    .hp-del, .hp-star {
+      width: 20px !important;
+      height: 20px !important;
+      border-radius: 50% !important;
+      border: none !important;
+      font-size: 12px !important;
+      line-height: 1 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      cursor: pointer !important;
+      background: rgba(0,0,0,0.6) !important;
+      color: #fff !important;
+    }
+    .hp-del:hover { background: #ff6b81 !important; }
+    .hp-star { background: rgba(138,92,245,0.85) !important; }
+    .hp-star.added { background: #3ee6a7 !important; }
+    .history-panel-empty {
+      text-align: center !important;
+      color: #7c87ad !important;
+      padding: 40px 10px !important;
+      font-size: 13px !important;
+      line-height: 2 !important;
+    }
+    .history-panel-empty span { font-size: 11px !important; color: #5a6480 !important; }
+
+    /* ===== 右侧历史栏:标题条 + 收缩 ===== */
+    .hp-bar {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      margin-bottom: 12px !important;
+      flex-shrink: 0 !important;
+    }
+    .hp-bar-title {
+      font-size: 14px !important;
+      font-weight: 700 !important;
+      color: #eef2ff !important;
+      white-space: nowrap !important;
+      letter-spacing: 0.5px !important;
+    }
+    .hp-collapse {
+      background: rgba(26,32,58,0.5) !important;
+      border: 1px solid rgba(140,150,220,0.2) !important;
+      color: #c9d2f0 !important;
+      width: 26px !important;
+      height: 26px !important;
+      border-radius: 8px !important;
+      cursor: pointer !important;
+      font-size: 13px !important;
+      line-height: 1 !important;
+      transition: all .15s !important;
+      flex-shrink: 0 !important;
+    }
+    .hp-collapse:hover {
+      background: rgba(138,92,245,0.25) !important;
+      border-color: rgba(138,92,245,0.5) !important;
+      color: #fff !important;
+    }
+    /* 收缩态:右侧缩成窄条 */
+    body.rh-collapsed .layout {
+      grid-template-columns: 220px 1fr 44px !important;
+    }
+    body.rh-collapsed .params-panel { padding: 16px 8px !important; }
+    body.rh-collapsed .hp-bar { justify-content: center !important; margin-bottom: 0 !important; }
+    body.rh-collapsed .hp-bar-title,
+    body.rh-collapsed .params-content { display: none !important; }
+
+    /* ===== 提示 toast: 屏幕上方显示 ===== */
+    .status-toast {
+      top: 72px !important;
+      bottom: auto !important;
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      background: rgba(26,32,58,0.9) !important;
+      border: 1px solid rgba(140,150,220,0.25) !important;
+      backdrop-filter: blur(8px) !important;
+      -webkit-backdrop-filter: blur(8px) !important;
+      box-shadow: 0 8px 28px rgba(4,4,20,0.4) !important;
+    }
+    .status-toast.success { background: rgba(62,230,167,0.9) !important; border-color: rgba(62,230,167,0.4) !important; }
+    .status-toast.error { background: rgba(255,107,129,0.9) !important; border-color: rgba(255,107,129,0.4) !important; }
+
+    /* ===== 输入框: 收起/展开 ===== */
+    /* 收起按钮: 输入框正上方, 44px 圆形(与展开按钮同尺寸) */
+    .prompt-collapse-wrap {
+      display: flex !important;
+      justify-content: center !important;
+      margin-bottom: 8px !important;
+      /* bottom-bar 是 pointer-events:none, 这里必须恢复点击 */
+      pointer-events: auto !important;
+    }
+    .prompt-collapse {
+      width: 44px !important;
+      height: 44px !important;
+      border-radius: 50% !important;
+      border: 1px solid rgba(140,150,220,0.25) !important;
+      background: linear-gradient(135deg, rgba(138,92,245,0.85), rgba(76,201,240,0.85)) !important;
+      color: #fff !important;
+      font-size: 20px !important;
+      line-height: 1 !important;
+      cursor: pointer !important;
+      box-shadow: 0 6px 20px rgba(138,92,245,0.4) !important;
+      transition: transform .15s !important;
+    }
+    .prompt-collapse:hover { transform: scale(1.08) !important; }
+    /* 收起态: 整个输入栏向下隐藏 */
+    body.prompt-hidden .bottom-bar {
+      transform: translateY(160%) !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      transition: transform .3s ease, opacity .3s ease !important;
+    }
+    .bottom-bar { transition: transform .3s ease, opacity .3s ease !important; }
+    /* 展开按钮: 屏幕底部中央小圆钮 */
+    .prompt-expand {
+      position: fixed;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 60;
+      width: 44px !important;
+      height: 44px !important;
+      border-radius: 50% !important;
+      border: 1px solid rgba(140,150,220,0.25) !important;
+      background: linear-gradient(135deg, rgba(138,92,245,0.9), rgba(76,201,240,0.9)) !important;
+      color: #fff !important;
+      font-size: 20px !important;
+      line-height: 1 !important;
+      cursor: pointer !important;
+      box-shadow: 0 6px 20px rgba(138,92,245,0.4) !important;
+      transition: transform .15s !important;
+    }
+    .prompt-expand:hover { transform: translateX(-50%) scale(1.08) !important; }
+
+    /* ===== 滚动条 ===== */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(140,150,220,0.28); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(140,150,220,0.45); }
+  </style>
+</head>
+<body>
+  <!-- 顶栏 -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-icon">✦</span>
+      <span>熙梦AI</span>
+      <span class="brand-sub">AI 聚合平台</span>
+    </div>
+    <div class="topbar-right">
+      <button id="openApiBtn" class="topbar-btn">🌐 API</button>
+      <button id="userBtn" class="topbar-btn" title="登录/账户">👤 <span id="userNameText">登录</span></button>
+      <span id="coinBadge" class="coin-badge" style="display:none">🪙 <span id="coinText">0</span></span>
+      <button id="openHistoryBtn" class="topbar-btn" title="历史记录">🕘 历史</button>
+    </div>
+  </header>
+
+  <!-- 主体三栏 -->
+  <main class="layout">
+    <!-- 左侧:类型 + 模型列表 -->
+    <aside class="sidebar">
+      <div class="type-tabs">
+        <button class="type-tab active" data-type="image">
+          <span class="type-icon">🖼</span>
+          <span>图片</span>
+        </button>
+        <button class="type-tab" data-type="video">
+          <span class="type-icon">🎬</span>
+          <span>视频</span>
+        </button>
+      </div>
+
+      <div class="filter-row" id="providerFilter">
+        <!-- 由 JS 按厂商分组渲染: 全部 + 各厂商图标 -->
+      </div>
+
+      <div id="modelList" class="model-list"></div>
+
+      <div class="sidebar-footer">
+        <div class="balance">余额 <span>¥0.10</span></div>
+        <button class="footer-btn">💰 充值</button>
+      </div>
+    </aside>
+
+    <!-- 中央:画布 + 提示语 -->
+    <section class="canvas-wrap">
+      <div class="canvas" id="canvas">
+        <div class="canvas-empty" id="canvasEmpty">
+          <h1 class="canvas-title">描述画面，我来生成</h1>
+          <p class="canvas-sub">开始创作，探索无限可能</p>
+          <div class="suggestion-chips" id="suggestionChips"></div>
+        </div>
+        <div class="canvas-result" id="canvasResult" hidden></div>
+      </div>
+    </section>
+
+    <!-- 右侧:历史面板(可收缩) -->
+    <aside class="params-panel" id="historyPanel">
+      <div class="hp-bar">
+        <span class="hp-bar-title">历史记录</span>
+        <button class="hp-collapse" id="hpCollapse" title="收起">❯</button>
+      </div>
+      <div id="paramsContent" class="params-content"></div>
+    </aside>
+  </main>
+
+  <!-- 底部输入栏(即梦/可灵风格:大圆角 + 下方参数 pill 行) -->
+  <div class="bottom-bar">
+    <div class="prompt-collapse-wrap">
+      <button class="prompt-collapse" id="promptCollapse" title="收起输入框">⌄</button>
+    </div>
+    <div class="prompt-card">
+      <div class="prompt-attachments" id="promptAttachments" hidden></div>
+      <div class="prompt-input-row">
+        <button class="ref-content-btn" id="attachBtn" title="添加参考内容">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+          </svg>
+        </button>
+        <button class="ref-content-btn at-btn" id="assetPickBtn" title="选择资产">
+          <span class="at-symbol">@</span>
+        </button>
+        <textarea id="prompt" placeholder="上传最多10个参考素材，输入文字描述；@参考内容、@图片1 模仿、@视频1 的动作、音色参考@音频1" rows="1"></textarea>
+      </div>
+      <div class="prompt-params-row" id="promptParamsRow">
+        <!-- JS 动态渲染参数 pill -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 输入框收起后, 底部中央的展开按钮 -->
+  <button class="prompt-expand" id="promptExpand" hidden title="展开输入框">⌃</button>
+
+  <div id="status" class="status-toast" hidden></div>
+
+  <script src="/fluid-canvas.js?v=20260831a"></script>
+  <script src="/app.js?v=20260831a"></script>
+</body>
+</html>
+
