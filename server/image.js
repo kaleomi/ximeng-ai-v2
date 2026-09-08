@@ -23,7 +23,7 @@ function extractChatImageUrl(data) {
 
 function buildBodyGenerations({ prompt, params }) {
   const model = params.model;
-  const { size, n, seed, quality, image, ...rest } = params;
+  const { size, n, seed, quality, image, guidance_scale, watermark, ...rest } = params;
   const body = { ...rest, prompt };
 
   // gpt-image-2 逆向组(gpt-image-2-all)只支持 model/prompt/size/image/quality:
@@ -39,9 +39,21 @@ function buildBodyGenerations({ prompt, params }) {
   // 官方建议显式要求 URL 返回(避免超大 base64, 网页展示友好)
   if (model === 'gpt-image-2') body.response_format = 'url';
 
-  // image 字段: gpt-image-2 官方是数组(支持多图); 其他模型单图字符串
+  // image 字段 — 按模型区分:
+  //   gpt-image-2: 官方是数组(支持多图参考)
+  //   即梦3(doubao-seedream-3-0) / 其他: spec 里 image 是 string(单图 URL)
   if (image) {
-    body.image = Array.isArray(image) ? image : [image];
+    if (model === 'gpt-image-2') {
+      body.image = Array.isArray(image) ? image : [image];
+    } else {
+      body.image = Array.isArray(image) ? image[0] : image;
+    }
+  }
+
+  // 即梦3 (doubao-seedream-3-0) 专有参数: guidance_scale / watermark
+  if (model === 'doubao-seedream-3-0-t2i-250415') {
+    if (guidance_scale != null && guidance_scale !== '') body.guidance_scale = Number(guidance_scale);
+    if (watermark != null && watermark !== '') body.watermark = watermark === 'true';
   }
   return body;
 }

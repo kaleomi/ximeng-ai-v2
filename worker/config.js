@@ -65,6 +65,8 @@ export function getConfig() {
         ], default: '1024x1024' },
         { key: 'quality', label: '质量 (gpt-image-2)', type: 'select', options: ['auto', 'low', 'medium', 'high'], default: 'auto', showWhen: { field: 'model', value: 'gpt-image-2' } },
         { key: 'image', label: '参考图 (图生图)', type: 'image', multiple: false, default: '' },
+        { key: 'guidance_scale', label: '引导强度 (即梦3)', type: 'number', min: 0, max: 20, default: 5, showWhen: { field: 'model', value: 'doubao-seedream-3-0-t2i-250415' } },
+        { key: 'watermark', label: '水印 (即梦3)', type: 'select', options: ['true', 'false'], default: 'false', showWhen: { field: 'model', value: 'doubao-seedream-3-0-t2i-250415' } },
         { key: 'n', label: '生成数量', type: 'number', min: 1, max: 4, default: 1 },
         { key: 'seed', label: '随机种子', type: 'number', default: -1 },
       ],
