@@ -12,7 +12,7 @@ import {
   useService,
 } from '@flowgram.ai/free-layout-editor';
 
-const cardkeys = ['ImageGenerate', 'VideoGenerate'];
+const cardkeys = ['Text', 'ImageGenerate', 'VideoGenerate'];
 
 export const NodeAddPanel: React.FC = () => {
   const startDragService = useService(WorkflowDragService);

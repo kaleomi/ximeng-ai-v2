@@ -1,8 +1,10 @@
 /**
  * 视频生成节点（对接熙梦AI worker API，异步轮询）
+ * data 驱动：参数与结果都存 form model，执行引擎可读写
  */
-import React, { useState } from 'react';
-import { FlowNodeRegistry, Field } from '@flowgram.ai/free-layout-editor';
+import React from 'react';
+import { FlowNodeRegistry, useNodeRender } from '@flowgram.ai/free-layout-editor';
+import { getFormModel } from '@flowgram.ai/form-core';
 
 const VIDEO_MODELS = [
   { value: 'doubao-seedance-2.5', label: 'Seedance 2.5' },
@@ -21,86 +23,39 @@ export const VideoGenerateNodeRegistry: FlowNodeRegistry = {
   },
   formMeta: {
     render: () => {
-      const [prompt, setPrompt] = useState('');
-      const [model, setModel] = useState(VIDEO_MODELS[0].value);
-      const [duration, setDuration] = useState(5);
-      const [status, setStatus] = useState<'idle' | 'loading' | 'polling' | 'done' | 'error'>(
-        'idle'
-      );
-      const [videoUrl, setVideoUrl] = useState('');
-
-      const handleGenerate = async () => {
-        if (!prompt.trim()) return;
-        setStatus('loading');
-        setVideoUrl('');
+      const { node } = useNodeRender();
+      const form = getFormModel(node) as any;
+      const read = (k: string, def: unknown = '') => {
         try {
-          const res = await fetch('/api/generate-video', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...apiAuthHeaders(),
-            },
-            body: JSON.stringify({
-              model,
-              prompt,
-              duration,
-              flavor: 'ark',
-            }),
-          });
-          const data = await res.json();
-          if (!data.ok || !data.taskId) {
-            setStatus('error');
-            alert(data.error || '提交失败');
-            return;
-          }
-          setStatus('polling');
-          await pollVideo(data.taskId);
-        } catch (e) {
-          setStatus('error');
-          alert('请求失败: ' + (e as Error).message);
+          const v = form?.getValueIn(k);
+          return v === undefined || v === null ? def : v;
+        } catch {
+          return def;
+        }
+      };
+      const update = (patch: Record<string, unknown>) => {
+        try {
+          Object.entries(patch).forEach(([k, v]) => form?.setValueIn(k, v));
+        } catch {
+          // ignore
         }
       };
 
-      const pollVideo = async (taskId: string) => {
-        let attempts = 0;
-        const maxAttempts = 120;
-        while (attempts < maxAttempts) {
-          await sleep(3000);
-          attempts++;
-          try {
-            const res = await fetch(`/api/video-status/${taskId}`, {
-              headers: { ...apiAuthHeaders() },
-            });
-            const data = await res.json();
-            if (data.ok && data.status === 'succeeded') {
-              setVideoUrl(data.url);
-              setStatus('done');
-              return;
-            }
-            if (data.status === 'failed' || data.status === 'error') {
-              setStatus('error');
-              alert('视频生成失败');
-              return;
-            }
-          } catch (e) {
-            // 继续轮询
-          }
-        }
-        setStatus('error');
-        alert('视频生成超时');
-      };
+      const prompt = String(read('prompt', ''));
+      const model = String(read('model', VIDEO_MODELS[0].value));
+      const duration = Number(read('duration', 5));
+      const status = String(read('status', 'idle'));
+      const videoUrl = String(read('videoUrl', ''));
 
       return (
         <div style={{ minWidth: 320 }}>
-          <Field<string> name="title">
-            {({ field }) => <div className="demo-free-node-title">🎬 视频生成</div>}
-          </Field>
+          <div className="demo-free-node-title">🎬 视频生成</div>
           <div
             className="demo-free-node-content"
             style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
           >
             <label style={{ fontSize: 12 }}>模型</label>
-            <select value={model} onChange={(e) => setModel(e.target.value)}>
+            <select value={model} onChange={(e) => update({ model: e.target.value })}>
               {VIDEO_MODELS.map((m) => (
                 <option key={m.value} value={m.value}>
                   {m.label}
@@ -111,7 +66,7 @@ export const VideoGenerateNodeRegistry: FlowNodeRegistry = {
             <label style={{ fontSize: 12 }}>Prompt</label>
             <textarea
               value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
+              onChange={(e) => update({ prompt: e.target.value })}
               rows={3}
               placeholder="描述你想生成的视频..."
             />
@@ -123,40 +78,21 @@ export const VideoGenerateNodeRegistry: FlowNodeRegistry = {
                 min={5}
                 max={15}
                 value={duration}
-                onChange={(e) => setDuration(Number(e.target.value))}
+                onChange={(e) => update({ duration: Number(e.target.value) })}
                 style={{ width: '100%' }}
               />
             </div>
 
-            <button
-              onClick={handleGenerate}
-              disabled={status === 'loading' || status === 'polling' || !prompt.trim()}
-              style={{
-                padding: '8px 0',
-                background: status === 'loading' || status === 'polling' ? '#ccc' : '#4d53e8',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 6,
-                cursor: 'pointer',
-              }}
-            >
-              {status === 'loading'
-                ? '提交中...'
-                : status === 'polling'
-                  ? '生成中(约1-3分钟)...'
-                  : '🎬 生成视频'}
-            </button>
-
-            {status === 'polling' && (
+            {status === 'processing' && (
               <div
                 style={{
                   textAlign: 'center',
-                  padding: '12px 0',
-                  color: '#888',
+                  padding: '8px 0',
+                  color: '#8a7bff',
                   fontSize: 12,
                 }}
               >
-                视频生成中，请耐心等待...
+                ⏳ 视频生成中(约1-3分钟)...
               </div>
             )}
 
@@ -173,16 +109,3 @@ export const VideoGenerateNodeRegistry: FlowNodeRegistry = {
     },
   },
 };
-
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function apiAuthHeaders(): Record<string, string> {
-  const headers: Record<string, string> = {};
-  const apiKey = localStorage.getItem('ai_media_api_key');
-  const baseUrl = localStorage.getItem('ai_media_base_url');
-  if (apiKey) headers['x-api-key'] = apiKey;
-  if (baseUrl) headers['x-base-url'] = baseUrl;
-  return headers;
-}

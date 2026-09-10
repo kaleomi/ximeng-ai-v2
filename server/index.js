@@ -10,7 +10,7 @@ import { submitRunninghub, getRunninghubStatus, uploadRunninghub } from './runni
 import { registerUser, loginUser, getUserProfile, genCode, storeEmailCode, verifyToken } from './auth.js';
 import { sendEmailCode } from './mailer.js';
 import { atomicDeductCoins, refundCoins, getCoinLogs, redeemCard } from './coins.js';
-import { supabaseHealth } from './supabase.js';
+import { supabaseHealth, supabaseFrom } from './supabase.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
@@ -232,6 +232,43 @@ const server = http.createServer(async (req, res) => {
       if (!r.success) return sendErr(res, 400, r.error);
       return sendOk(res, { coins: r.coins, added: r.added });
     }
+
+    // ===== 工作流保存 / 加载（Supabase 持久化）=====
+    if (url.pathname === '/api/workflow/save' && req.method === 'POST') {
+      if (!user) return sendErr(res, 401, '未登录');
+      const body = await readJsonBody(req);
+      if (!body.json) return sendErr(res, 400, '缺少工作流数据');
+      const now = new Date().toISOString();
+      const { data: existing } = await supabaseFrom('workflows')
+        .select('id')
+        .eq('user_id', String(user.id))
+        .maybeSingle();
+      if (existing) {
+        const { error } = await supabaseFrom('workflows')
+          .eq('user_id', String(user.id))
+          .update({ data: body.json, updated_at: now });
+        if (error) return sendErr(res, 500, '保存失败: ' + String(error.message || error.code));
+      } else {
+        const { error } = await supabaseFrom('workflows').insert({
+          user_id: String(user.id),
+          data: body.json,
+          updated_at: now,
+        });
+        if (error) return sendErr(res, 500, '保存失败: ' + String(error.message || error.code));
+      }
+      return sendOk(res, { saved: true, updated_at: now });
+    }
+
+    if (url.pathname === '/api/workflow/load' && req.method === 'GET') {
+      if (!user) return sendErr(res, 401, '未登录');
+      const { data, error } = await supabaseFrom('workflows')
+        .select('*')
+        .eq('user_id', String(user.id))
+        .maybeSingle();
+      if (error) return sendErr(res, 500, '加载失败: ' + String(error.message || error.code));
+      return sendOk(res, { json: data ? data.data : null, updated_at: data ? data.updated_at : null });
+    }
+
 
     if (url.pathname === '/api/health' && req.method === 'GET') {
       const db = await supabaseHealth();

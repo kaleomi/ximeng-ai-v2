@@ -1,8 +1,10 @@
 /**
  * 图片生成节点（对接熙梦AI worker API）
+ * data 驱动：参数与结果都存 form model，执行引擎可读写
  */
-import React, { useState } from 'react';
-import { FlowNodeRegistry, Field } from '@flowgram.ai/free-layout-editor';
+import React from 'react';
+import { FlowNodeRegistry, useNodeRender } from '@flowgram.ai/free-layout-editor';
+import { getFormModel } from '@flowgram.ai/form-core';
 
 const IMAGE_MODELS = [
   { value: 'doubao-seedream-5-0-260128', label: '即梦3 Seedream 5.0' },
@@ -23,53 +25,40 @@ export const ImageGenerateNodeRegistry: FlowNodeRegistry = {
   },
   formMeta: {
     render: () => {
-      const [prompt, setPrompt] = useState('');
-      const [model, setModel] = useState(IMAGE_MODELS[0].value);
-      const [size, setSize] = useState(SIZES[0]);
-      const [n, setN] = useState(1);
-      const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
-      const [imageUrl, setImageUrl] = useState('');
-
-      const handleGenerate = async () => {
-        if (!prompt.trim()) return;
-        setStatus('loading');
-        setImageUrl('');
+      const { node } = useNodeRender();
+      const form = getFormModel(node) as any;
+      const read = (k: string, def: unknown = '') => {
         try {
-          const res = await fetch('/api/generate-image', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...apiAuthHeaders(),
-            },
-            body: JSON.stringify({
-              model,
-              prompt,
-              size,
-              n,
-            }),
-          });
-          const data = await res.json();
-          if (data.ok && data.url) {
-            setImageUrl(data.url);
-            setStatus('done');
-          } else {
-            setStatus('error');
-            alert(data.error || '生成失败');
-          }
-        } catch (e) {
-          setStatus('error');
-          alert('请求失败: ' + (e as Error).message);
+          const v = form?.getValueIn(k);
+          return v === undefined || v === null ? def : v;
+        } catch {
+          return def;
+        }
+      };
+      const update = (patch: Record<string, unknown>) => {
+        try {
+          Object.entries(patch).forEach(([k, v]) => form?.setValueIn(k, v));
+        } catch {
+          // ignore
         }
       };
 
+      const prompt = String(read('prompt', ''));
+      const model = String(read('model', IMAGE_MODELS[0].value));
+      const size = String(read('size', SIZES[0]));
+      const n = Number(read('n', 1));
+      const status = String(read('status', 'idle'));
+      const imageUrl = String(read('imageUrl', ''));
+
       return (
         <div style={{ minWidth: 320 }}>
-          <Field<string> name="title">
-            {({ field }) => <div className="demo-free-node-title">🖼 图片生成</div>}
-          </Field>
-          <div className="demo-free-node-content" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="demo-free-node-title">🖼 图片生成</div>
+          <div
+            className="demo-free-node-content"
+            style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+          >
             <label style={{ fontSize: 12 }}>模型</label>
-            <select value={model} onChange={(e) => setModel(e.target.value)}>
+            <select value={model} onChange={(e) => update({ model: e.target.value })}>
               {IMAGE_MODELS.map((m) => (
                 <option key={m.value} value={m.value}>
                   {m.label}
@@ -80,7 +69,7 @@ export const ImageGenerateNodeRegistry: FlowNodeRegistry = {
             <label style={{ fontSize: 12 }}>Prompt</label>
             <textarea
               value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
+              onChange={(e) => update({ prompt: e.target.value })}
               rows={3}
               placeholder="描述你想生成的图片..."
             />
@@ -88,7 +77,7 @@ export const ImageGenerateNodeRegistry: FlowNodeRegistry = {
             <div style={{ display: 'flex', gap: 8 }}>
               <div style={{ flex: 1 }}>
                 <label style={{ fontSize: 12 }}>尺寸</label>
-                <select value={size} onChange={(e) => setSize(e.target.value)}>
+                <select value={size} onChange={(e) => update({ size: e.target.value })}>
                   {SIZES.map((s) => (
                     <option key={s} value={s}>
                       {s}
@@ -98,7 +87,7 @@ export const ImageGenerateNodeRegistry: FlowNodeRegistry = {
               </div>
               <div style={{ width: 70 }}>
                 <label style={{ fontSize: 12 }}>数量</label>
-                <select value={n} onChange={(e) => setN(Number(e.target.value))}>
+                <select value={n} onChange={(e) => update({ n: Number(e.target.value) })}>
                   {[1, 2, 3, 4].map((v) => (
                     <option key={v} value={v}>
                       {v}
@@ -108,20 +97,18 @@ export const ImageGenerateNodeRegistry: FlowNodeRegistry = {
               </div>
             </div>
 
-            <button
-              onClick={handleGenerate}
-              disabled={status === 'loading' || !prompt.trim()}
-              style={{
-                padding: '8px 0',
-                background: status === 'loading' ? '#ccc' : '#4d53e8',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 6,
-                cursor: 'pointer',
-              }}
-            >
-              {status === 'loading' ? '生成中...' : '✨ 生成图片'}
-            </button>
+            {status === 'processing' && (
+              <div
+                style={{
+                  textAlign: 'center',
+                  padding: '8px 0',
+                  color: '#8a7bff',
+                  fontSize: 12,
+                }}
+              >
+                ⏳ 生成中...
+              </div>
+            )}
 
             {imageUrl && (
               <img
@@ -136,12 +123,3 @@ export const ImageGenerateNodeRegistry: FlowNodeRegistry = {
     },
   },
 };
-
-function apiAuthHeaders(): Record<string, string> {
-  const headers: Record<string, string> = {};
-  const apiKey = localStorage.getItem('ai_media_api_key');
-  const baseUrl = localStorage.getItem('ai_media_base_url');
-  if (apiKey) headers['x-api-key'] = apiKey;
-  if (baseUrl) headers['x-base-url'] = baseUrl;
-  return headers;
-}

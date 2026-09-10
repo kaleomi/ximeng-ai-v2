@@ -7,11 +7,13 @@ import { WorkflowNodeRegistry } from '@flowgram.ai/free-layout-editor';
 
 import { StartNodeRegistry } from './start';
 import { EndNodeRegistry } from './end';
+import { TextNodeRegistry } from './text';
 import { ImageGenerateNodeRegistry } from './image-generate';
 import { VideoGenerateNodeRegistry } from './video-generate';
 
 export const nodeRegistries: WorkflowNodeRegistry[] = [
   StartNodeRegistry,
+  TextNodeRegistry,
   ImageGenerateNodeRegistry,
   VideoGenerateNodeRegistry,
   EndNodeRegistry,
