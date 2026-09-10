@@ -7,6 +7,13 @@
 # ===== 依赖 =====
 node_modules/
 
+# ===== 画布子应用构建产物（已复制到 public/canvas，不重复提交）=====
+canvas/dist/
+canvas/node_modules/
+canvas/undefined/
+
+
+
 # ===== Tokeny 内部 =====
 .tokeny/
 

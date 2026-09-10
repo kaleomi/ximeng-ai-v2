@@ -1,0 +1,31 @@
+{
+  "name": "ximeng-ai-canvas",
+  "version": "0.1.0",
+  "private": true,
+  "description": "熙梦AI 工作流画布（基于 FlowGram）",
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development rsbuild dev --open",
+    "build": "cross-env MODE=app NODE_ENV=production rsbuild build",
+    "start": "cross-env NODE_ENV=development rsbuild dev --open",
+    "ts-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@flowgram.ai/core": "1.0.15",
+    "@flowgram.ai/free-layout-editor": "1.0.15",
+    "@flowgram.ai/free-snap-plugin": "1.0.15",
+    "@flowgram.ai/minimap-plugin": "1.0.15",
+    "@flowgram.ai/free-container-plugin": "1.0.15",
+    "@flowgram.ai/free-layout-core": "1.0.15",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@rsbuild/core": "^1.2.16",
+    "@rsbuild/plugin-react": "^1.1.1",
+    "@types/node": "^18.19.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.8.3",
+    "cross-env": "~7.0.3"
+  }
+}

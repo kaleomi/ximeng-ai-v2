@@ -101,8 +101,11 @@ function sendErr(res, status, error) { send(res, status, { ok: false, error }); 
 function serveStatic(req, res) {
   let urlPath = decodeURIComponent(req.url.split('?')[0]);
   if (urlPath === '/') urlPath = '/index.html';
+  // 目录路径自动补 index.html（支持 /canvas/ 子应用）
+  if (urlPath.endsWith('/')) urlPath += 'index.html';
   const filePath = path.join(PUBLIC_DIR, urlPath);
   if (!filePath.startsWith(PUBLIC_DIR)) return sendErr(res, 403, 'Forbidden');
+
 
   fs.readFile(filePath, (err, buf) => {
     if (err) {
