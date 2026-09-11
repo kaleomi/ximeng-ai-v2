@@ -13,6 +13,33 @@ body,
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
+/* 节点执行中高亮动画（status=processing 时由节点组件添加类） */
+@keyframes nodeProcessingPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(138, 123, 255, 0.5), 0 12px 32px rgba(0, 0, 0, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(138, 123, 255, 0), 0 12px 32px rgba(0, 0, 0, 0.45);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(138, 123, 255, 0), 0 12px 32px rgba(0, 0, 0, 0.45);
+  }
+}
+.demo-free-node.processing {
+  border-color: #8a7bff !important;
+  animation: nodeProcessingPulse 1.5s infinite;
+}
+.demo-free-node.processing .demo-free-node-title {
+  background: linear-gradient(120deg, rgba(138, 123, 255, 0.6), rgba(64, 168, 255, 0.5)) !important;
+}
+.demo-free-node.completed {
+  border-color: rgba(52, 211, 153, 0.6) !important;
+}
+.demo-free-node.error {
+  border-color: rgba(248, 113, 113, 0.7) !important;
+}
+
+
 .demo-free-node {
   display: flex;
   flex-direction: column;

@@ -9,11 +9,22 @@ import { useEditorProps } from './hooks/use-editor-props';
 import { Tools } from './components/tools';
 import { NodeAddPanel } from './components/node-add-panel';
 import { Minimap } from './components/minimap';
-import { executeWorkflow } from './executor';
+import { executeWorkflow, resetWorkflowStatus } from './executor';
+import { SAMPLE_WORKFLOW } from './sample-workflow';
 import '@flowgram.ai/free-layout-editor/index.css';
 import './index.css';
 
-/** 运行控制条（按钮 + 日志 + 保存/加载） */
+const ghostBtn: React.CSSProperties = {
+  padding: '10px 14px',
+  background: 'linear-gradient(160deg, rgba(40,46,78,0.9), rgba(28,32,58,0.95))',
+  color: '#eef2ff',
+  border: '1px solid rgba(140,150,220,0.25)',
+  borderRadius: 8,
+  fontSize: 13,
+  cursor: 'pointer',
+};
+
+/** 运行控制条（运行 / 重置 / 示例 / 保存 / 加载 + 日志） */
 function RunBar() {
   const { document } = useClientContext();
   const [running, setRunning] = useState(false);
@@ -27,6 +38,16 @@ function RunBar() {
       onLog: (msg) => setLogs((prev) => [...prev.slice(-30), msg]),
       onFinished: () => setRunning(false),
     });
+  };
+
+  const handleReset = () => {
+    resetWorkflowStatus(document);
+    setLogs((p) => [...p.slice(-30), '♻️ 已重置所有节点状态']);
+  };
+
+  const handleSample = () => {
+    document.fromJSON(SAMPLE_WORKFLOW as never);
+    setLogs((p) => [...p.slice(-30), '✨ 已加载示例工作流（文本→图片→视频→结束）']);
   };
 
   const authToken = () => localStorage.getItem('ai_media_auth') || '';
@@ -89,35 +110,17 @@ function RunBar() {
         alignItems: 'flex-end',
       }}
     >
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button
-          onClick={handleSave}
-          disabled={running}
-          style={{
-            padding: '10px 16px',
-            background: 'linear-gradient(160deg, rgba(40,46,78,0.9), rgba(28,32,58,0.95))',
-            color: '#eef2ff',
-            border: '1px solid rgba(140,150,220,0.25)',
-            borderRadius: 8,
-            fontSize: 13,
-            cursor: 'pointer',
-          }}
-        >
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        <button onClick={handleSample} disabled={running} style={ghostBtn}>
+          ✨ 示例
+        </button>
+        <button onClick={handleReset} disabled={running} style={ghostBtn}>
+          ♻️ 重置
+        </button>
+        <button onClick={handleSave} disabled={running} style={ghostBtn}>
           💾 保存
         </button>
-        <button
-          onClick={handleLoad}
-          disabled={running}
-          style={{
-            padding: '10px 16px',
-            background: 'linear-gradient(160deg, rgba(40,46,78,0.9), rgba(28,32,58,0.95))',
-            color: '#eef2ff',
-            border: '1px solid rgba(140,150,220,0.25)',
-            borderRadius: 8,
-            fontSize: 13,
-            cursor: 'pointer',
-          }}
-        >
+        <button onClick={handleLoad} disabled={running} style={ghostBtn}>
           📂 加载
         </button>
         <button

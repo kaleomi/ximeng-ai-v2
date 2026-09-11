@@ -59,9 +59,20 @@ export const useEditorProps = () =>
         renderDefaultNode: (props: WorkflowNodeProps) => {
           const { node, form } = useNodeRender();
           const meta = node.getNodeMeta<FlowNodeMeta>();
+          // 根据节点执行状态动态加高亮类（processing/completed/error）
+          let status = 'idle';
+          try {
+            status = (form as any)?.getValueIn?.('status') || 'idle';
+          } catch {
+            status = 'idle';
+          }
+          const statusClass =
+            status === 'processing' || status === 'completed' || status === 'error'
+              ? ` ${status}`
+              : '';
           return (
             <WorkflowNodeRenderer
-              className="demo-free-node"
+              className={`demo-free-node${statusClass}`}
               node={props.node}
               style={meta.wrapperStyle}
             >

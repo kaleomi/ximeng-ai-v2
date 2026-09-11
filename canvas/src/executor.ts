@@ -151,6 +151,14 @@ async function runImageNode(
       setNodeValue(doc, node.id, 'status', 'completed');
       setNodeValue(doc, node.id, 'imageUrl', json.url);
       setNodeValue(doc, node.id, 'output', json.url);
+      // 打通主站历史
+      saveToMainHistory({
+        type: 'image',
+        model: node.data.model || 'doubao-seedream-5-0-260128',
+        prompt,
+        src: json.url,
+        images: json.images || [json.url],
+      });
     } else {
       setNodeValue(doc, node.id, 'status', 'error');
     }
@@ -211,6 +219,13 @@ async function runVideoNode(
           setNodeValue(doc, node.id, 'status', 'completed');
           setNodeValue(doc, node.id, 'videoUrl', sJson.url);
           setNodeValue(doc, node.id, 'output', sJson.url);
+          // 打通主站历史
+          saveToMainHistory({
+            type: 'video',
+            model: node.data.model || 'doubao-seedance-2.5',
+            prompt,
+            src: sJson.url,
+          });
           return;
         }
         if (sJson.status === 'failed' || sJson.status === 'error') {
@@ -308,3 +323,30 @@ export async function executeWorkflow(
   cbs?.onFinished?.(allOk);
   return allOk;
 }
+
+/** 重置所有节点的执行状态（重新运行前调用） */
+export function resetWorkflowStatus(doc: WorkflowDocument) {
+  let json: any;
+  try {
+    json = doc.toJSON();
+  } catch {
+    json = { nodes: [], edges: [] };
+  }
+  (json.nodes || []).forEach((n: { id: string }) => {
+    setNodeValue(doc, n.id, 'status', 'idle');
+  });
+}
+
+/** 把生成结果写入主站历史记录（与主站共用 localStorage） */
+export function saveToMainHistory(entry: Record<string, unknown>) {
+  try {
+    const key = 'ai_media_history';
+    const list: unknown[] = JSON.parse(localStorage.getItem(key) || '[]');
+    list.unshift({ ...entry, ts: Date.now() });
+    if (list.length > 50) list.length = 50;
+    localStorage.setItem(key, JSON.stringify(list));
+  } catch {
+    // ignore
+  }
+}
+
