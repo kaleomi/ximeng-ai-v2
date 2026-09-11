@@ -16,6 +16,7 @@ const VIDEO_MODELS = [
 export const VideoGenerateNodeRegistry: FlowNodeRegistry = {
   type: 'video-generate',
   meta: {
+    defaultExpanded: true,
     defaultPorts: [
       { type: 'input', position: 'left' },
       { type: 'output', position: 'right' },

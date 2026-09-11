@@ -84,11 +84,23 @@ export const useEditorProps = () =>
       onContentChange(ctx) {
         // 自动保存（后续接入数据库）
       },
+      // 节点引擎：必须启用，节点表单(formMeta)才会渲染（输入框可见的关键）
+      nodeEngine: {
+        enable: true,
+      },
       history: {
         enable: true,
         enableChangeNode: true,
       },
       onAllLayersRendered(ctx) {
+        // 确保所有节点展开（输入表单可见）
+        try {
+          ctx.document.getAllNodes().forEach((n: any) => {
+            if (n.collapsed) n.collapsed = false;
+          });
+        } catch {
+          // ignore
+        }
         ctx.document.fitView(false);
       },
       plugins: () => [

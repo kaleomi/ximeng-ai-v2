@@ -18,6 +18,7 @@ const SIZES = ['1024x1024', '1536x1024', '1024x1536', '2048x2048', '3840x2160'];
 export const ImageGenerateNodeRegistry: FlowNodeRegistry = {
   type: 'image-generate',
   meta: {
+    defaultExpanded: true,
     defaultPorts: [
       { type: 'input', position: 'left' },
       { type: 'output', position: 'right' },

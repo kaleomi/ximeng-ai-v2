@@ -8,6 +8,7 @@ import { getFormModel } from '@flowgram.ai/form-core';
 export const TextNodeRegistry: FlowNodeRegistry = {
   type: 'text',
   meta: {
+    defaultExpanded: true,
     defaultPorts: [
       { type: 'input', position: 'left' },
       { type: 'output', position: 'right' },
