@@ -1,3 +1,4 @@
+import { fetchRunninghubSchema } from '../shared/runninghub-schema.js';
 // =====================================================
 //  Cloudflare Workers 入口
 //  - /api/*  → worker 处理(图像/视频/上传/配置)
@@ -224,6 +225,11 @@ export default {
       }
 
       // ---- 视频提交 ----
+      if (pathname.startsWith('/api/runninghub/schema/') && request.method === 'GET') {
+        try { return ok({ schema: await fetchRunninghubSchema(pathname.slice('/api/runninghub/schema/'.length)) }); }
+        catch (e) { return err(400, e.message); }
+      }
+
       if (pathname === '/api/generate-video' && request.method === 'POST') {
         const body = await request.json();
         const { flavor, ...rest } = body;

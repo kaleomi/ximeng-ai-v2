@@ -7,7 +7,9 @@
     "dev": "cross-env NODE_ENV=development rsbuild dev --open",
     "build": "cross-env MODE=app NODE_ENV=production rsbuild build",
     "start": "cross-env NODE_ENV=development rsbuild dev --open",
-    "ts-check": "tsc --noEmit"
+    "ts-check": "tsc --noEmit",
+    "test": "node --test tests/workflow.test.cjs",
+    "postbuild": "node scripts/sync-build.cjs"
   },
   "dependencies": {
     "@flowgram.ai/core": "1.0.15",

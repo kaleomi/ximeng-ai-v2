@@ -1,63 +1,15 @@
-/**
- * 示例工作流（一键加载演示：文本 → 图片生成 → 视频生成 → 结束）
- */
 import type { WorkflowJSON } from '@flowgram.ai/free-layout-editor';
-
+import { newNodeData } from './workflow';
 export const SAMPLE_WORKFLOW: WorkflowJSON = {
   nodes: [
-    {
-      id: 'start_sample',
-      type: 'start',
-      meta: { position: { x: 60, y: 220 } },
-      data: { title: '开始' },
-    },
-    {
-      id: 'text_sample',
-      type: 'text',
-      meta: { position: { x: 300, y: 220 } },
-      data: {
-        title: '文本',
-        text: '一只戴着宇航头盔的橘猫，漂浮在太空站窗外，蔚蓝地球为背景，电影级光照，超写实',
-      },
-    },
-    {
-      id: 'image_sample',
-      type: 'image-generate',
-      meta: { position: { x: 560, y: 220 } },
-      data: {
-        title: '图片生成',
-        model: 'doubao-seedream-5-0-260128',
-        size: '1024x1024',
-        quality: 'high',
-        count: 1,
-        prompt: '',
-      },
-    },
-    {
-      id: 'video_sample',
-      type: 'video-generate',
-      meta: { position: { x: 950, y: 220 } },
-      data: {
-        title: '视频生成',
-        model: 'doubao-seedance-2.5',
-        ratio: '16:9',
-        quality: '1080P',
-        duration: 5,
-        count: 1,
-        prompt: '',
-      },
-    },
-    {
-      id: 'end_sample',
-      type: 'end',
-      meta: { position: { x: 1350, y: 220 } },
-      data: { title: '结束' },
-    },
+    { id: 'text_sample', type: 'text', meta: { position: { x: 50, y: 30 } }, data: { ...newNodeData('text'), text: '镜头缓缓推进，画面主体自然运动，保留参考图的构图、色彩和光线，电影质感。' } },
+    { id: 'upload_sample', type: 'image-upload', meta: { position: { x: 50, y: 450 } }, data: newNodeData('image-upload') },
+    { id: 'video_sample', type: 'video-generate', meta: { position: { x: 470, y: 130 } }, data: newNodeData('video-generate') },
+    { id: 'preview_sample', type: 'preview', meta: { position: { x: 900, y: 130 } }, data: newNodeData('preview') },
   ],
   edges: [
-    { sourceNodeID: 'start_sample', targetNodeID: 'text_sample' },
-    { sourceNodeID: 'text_sample', targetNodeID: 'image_sample' },
-    { sourceNodeID: 'image_sample', targetNodeID: 'video_sample' },
-    { sourceNodeID: 'video_sample', targetNodeID: 'end_sample' },
+    { sourceNodeID: 'text_sample', sourcePortID: 'text', targetNodeID: 'video_sample', targetPortID: 'text' },
+    { sourceNodeID: 'upload_sample', sourcePortID: 'image', targetNodeID: 'video_sample', targetPortID: 'image' },
+    { sourceNodeID: 'video_sample', sourcePortID: 'video', targetNodeID: 'preview_sample', targetPortID: 'media' },
   ],
 };

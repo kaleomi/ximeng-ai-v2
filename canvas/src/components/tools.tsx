@@ -1,39 +1,13 @@
-/**
- * 工具栏 - 熙梦AI 工作流
- * Copyright (c) 2025 Bytedance Ltd. and/or its affiliates
- * SPDX-License-Identifier: MIT
- */
 import { useEffect, useState } from 'react';
-
 import { usePlaygroundTools, useClientContext } from '@flowgram.ai/free-layout-editor';
-
-export function Tools() {
+export function Tools({ running = false }: { running?: boolean }) {
   const { history } = useClientContext();
   const tools = usePlaygroundTools();
-  const [canUndo, setCanUndo] = useState(false);
-  const [canRedo, setCanRedo] = useState(false);
-
-  useEffect(() => {
-    const disposable = history.undoRedoService.onChange(() => {
-      setCanUndo(history.canUndo());
-      setCanRedo(history.canRedo());
-    });
-    return () => disposable.dispose();
-  }, [history]);
-
-  return (
-    <div style={{ position: 'absolute', zIndex: 10, bottom: 16, left: 226, display: 'flex', gap: 8 }}>
-      <button onClick={() => tools.zoomin()}>放大</button>
-      <button onClick={() => tools.zoomout()}>缩小</button>
-      <button onClick={() => tools.fitView()}>适应</button>
-      <button onClick={() => tools.autoLayout({})}>自动布局</button>
-      <button onClick={() => history.undo()} disabled={!canUndo}>
-        撤销
-      </button>
-      <button onClick={() => history.redo()} disabled={!canRedo}>
-        重做
-      </button>
-      <span>{Math.floor(tools.zoom * 100)}%</span>
-    </div>
-  );
+  const [version, setVersion] = useState(0);
+  useEffect(() => { const listener = history.undoRedoService.onChange(() => setVersion((n) => n + 1)); return () => listener.dispose(); }, [history]);
+  return <div className="canvas-tools" role="toolbar" aria-label="画布工具">
+    <button onClick={() => tools.zoomout()} aria-label="缩小" title="缩小">−</button><span className="zoom-value">{Math.round(tools.zoom * 100)}%</span><button onClick={() => tools.zoomin()} aria-label="放大" title="放大">+</button>
+    <span className="tool-divider" /><button onClick={() => tools.fitView()} title="查看全部节点">适应</button><button onClick={() => tools.autoLayout({})} disabled={running}>整理</button><span className="tool-divider" />
+    <button onClick={() => history.undo()} disabled={running || !history.canUndo()} title="撤销 Ctrl+Z">↶</button><button onClick={() => history.redo()} disabled={running || !history.canRedo()} title="重做 Ctrl+Shift+Z">↷</button>
+  </div>;
 }

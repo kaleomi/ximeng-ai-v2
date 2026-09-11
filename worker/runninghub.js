@@ -2,6 +2,8 @@
 // AI App (ComfyUI 工作流) 提交/查询/上传, 鉴权独立于 comfly
 import { getConfig } from './config.js';
 
+import { validateRunninghubSubmission } from '../shared/runninghub-schema.js';
+
 function resolveAuth(auth = {}) {
   const CONFIG = getConfig();
   const apiKey = (auth.rhKey || '').trim() || CONFIG.runninghub.apiKey;
@@ -42,10 +44,10 @@ export async function uploadRunninghub({ buffer, filename, auth = {} }) {
       return { ok: false, error: data?.message || `RunningHub 上传失败 ${r.status}` };
     }
     const d = data?.data;
-    if (!d?.filename) {
+    if (!(d?.filename || d?.fileName)) {
       return { ok: false, error: '上传成功但响应缺少 filename', upstream: data };
     }
-    return { ok: true, url: d.download_url || d.filename, filename: d.filename };
+    return { ok: true, url: d.download_url || d.filename || d.fileName, filename: d.filename || d.fileName };
   } catch (err) {
     return { ok: false, error: `上传请求失败: ${err.message}` };
   }
@@ -79,9 +81,11 @@ export async function submitRunninghub({ prompt, params = {}, auth = {} }) {
   const CONFIG = getConfig();
   const { apiKey, baseUrl } = resolveAuth(auth);
   if (!apiKey) return { ok: false, error: '未配置 RunningHub API Key' };
-  if (!prompt) return { ok: false, error: 'prompt 不能为空' };
+  if (!params.appId && !prompt) return { ok: false, error: 'prompt 不能为空' };
 
-  const nodeInfoList = buildNodeInfoList(prompt, params);
+  let nodeInfoList;
+  try { nodeInfoList = params.appId ? validateRunninghubSubmission(params) : buildNodeInfoList(prompt, params); }
+  catch (e) { return { ok: false, error: e.message }; }
   const body = {
     nodeInfoList,
     instanceType: params.instanceType || CONFIG.runninghub.instanceType,
@@ -89,7 +93,7 @@ export async function submitRunninghub({ prompt, params = {}, auth = {} }) {
   };
 
   try {
-    const res = await fetch(baseUrl + CONFIG.runninghub.submit.endpoint.replace('{appId}', CONFIG.runninghub.appId), {
+    const res = await fetch(baseUrl + CONFIG.runninghub.submit.endpoint.replace('{appId}', params.appId || CONFIG.runninghub.appId), {
       method: 'POST',
       headers: rhHeaders(apiKey),
       body: JSON.stringify(body),
@@ -136,7 +140,7 @@ export async function getRunninghubStatus({ taskId, auth = {} }) {
       const video = results.find(r => ['mp4', 'webm', 'mov'].includes(String(r.outputType || '').toLowerCase()));
       const any = results.find(r => r.url);
       const url = (video || any)?.url || null;
-      if (url) return { ok: true, status: 'succeeded', url, upstream: data };
+      if (url || results.some(r => r.text)) return { ok: true, status: 'succeeded', url, results, upstream: data };
       return { ok: false, error: '任务成功但未找到结果 URL', upstream: data };
     }
     if (status === 'FAILED' || status === 'CANCELED' || status === 'CANCELLED') {

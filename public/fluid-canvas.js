@@ -15,6 +15,7 @@
   document.body.insertBefore(canvas, document.body.firstChild);
 
   var ctx = canvas.getContext('2d', { alpha: false });
+  if (!ctx) return;
   var offscreen = document.createElement('canvas');
   var offCtx = offscreen.getContext('2d', { alpha: true });
 
@@ -271,8 +272,13 @@
   var fluidRender = new FluidRenderer();
   var glow = new GlowParticles();
   var lastTime = 0;
+  var frame = 0;
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   function animate(now) {
+    frame = 0;
+    if (document.hidden) return;
+    if (now - lastTime < 1000 / 30) { frame = requestAnimationFrame(animate); return; }
     var dt = Math.min((now - lastTime) / 1000, 0.04);
     lastTime = now;
 
@@ -336,7 +342,7 @@
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
 
-    requestAnimationFrame(animate);
+    if (!reduceMotion.matches) frame = requestAnimationFrame(animate);
   }
 
   // 事件（绑定 window，因为 canvas 是 pointer-events:none；写入 tm 目标位置由主循环平滑跟随）
@@ -350,7 +356,7 @@
       tm.x = t.clientX / W;
       tm.y = t.clientY / H;
     }
-  }, { passive: false });
+  }, { passive: true });
   window.addEventListener('touchstart', function (e) {
     if (e.touches.length) {
       var t = e.touches[0];
@@ -369,16 +375,8 @@
       var a = Math.random() * Math.PI * 2;
       solver.addVelocity(x, y, Math.cos(a) * 0.1, Math.sin(a) * 0.1);
     }
-    lastTime = performance.now();
-    requestAnimationFrame(animate);
-  }
-
-  function _fluidBadge(text, color) {
-    var b = document.createElement('div');
-    b.id = 'fluidBadge';
-    b.textContent = text;
-    b.style.cssText = 'position:fixed;bottom:8px;left:8px;z-index:99999;font:11px monospace;padding:3px 8px;border-radius:4px;color:#fff;background:' + color + ';pointer-events:none;opacity:0.9;';
-    document.body.appendChild(b);
+    lastTime = performance.now() - 40;
+    frame = requestAnimationFrame(animate);
   }
 
   function autoStart() {
@@ -386,12 +384,21 @@
     window.__fluidCanvasReady = true;
     try {
       initApp();
-      _fluidBadge('流体运行中', 'rgba(80,200,140,0.8)');
+
     } catch (err) {
-      _fluidBadge('流体启动失败: ' + (err && err.message ? err.message : err), 'rgba(220,80,90,0.9)');
+
       console.error('[fluid-canvas] 启动失败', err);
     }
   }
+
+  function resume() {
+    if (frame) cancelAnimationFrame(frame);
+    frame = 0;
+    if (!document.hidden) { lastTime = performance.now() - 40; frame = requestAnimationFrame(animate); }
+  }
+  document.addEventListener('visibilitychange', resume);
+  reduceMotion.addEventListener('change', resume);
+  window.addEventListener('resize', resume);
 
   window.fluidCanvas = { init: autoStart };
 

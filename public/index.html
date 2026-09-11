@@ -476,20 +476,26 @@
     ::-webkit-scrollbar-thumb { background: rgba(140,150,220,0.28); border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: rgba(140,150,220,0.45); }
   </style>
+  <link rel="stylesheet" href="/studio-theme.css?v=20260911b" />
+  <meta name="theme-color" content="#15171c" />
+  <link rel="stylesheet" href="/appearance.css?v=20260911c" />
+  <script src="/appearance.js?v=20260911c"></script>
 </head>
-<body>
+<body class="studio-home">
+  <div class="loop-background" aria-hidden="true"></div>
   <!-- 顶栏 -->
   <header class="topbar">
     <div class="brand">
       <span class="brand-icon">✦</span>
       <span>熙梦AI</span>
-      <span class="brand-sub">AI 聚合平台</span>
+      <span class="brand-sub">创作工作室</span>
     </div>
     <div class="topbar-right">
+      <button id="themeToggle" class="topbar-btn" type="button" aria-label="切换为白天背景">☀ 白天</button>
       <button id="openApiBtn" class="topbar-btn" style="display:none">🌐 API</button>
-      <a href="/canvas/" class="topbar-btn" title="工作流画布" style="text-decoration:none;display:inline-flex;align-items:center">🧩 画布</a>
-      <button id="userBtn" class="topbar-btn" title="登录/账户">👤 <span id="userNameText">登录</span><span id="coinBadge" class="coin-badge" style="display:none">🪙 <span id="coinText">0</span></span></button>
-      <button id="openHistoryBtn" class="topbar-btn" title="历史记录">🕘 历史</button>
+      <a href="/canvas/" class="topbar-btn" title="工作流画布" style="text-decoration:none;display:inline-flex;align-items:center"><span aria-hidden="true">◇</span> 工作流画布</a>
+      <button id="userBtn" class="topbar-btn" title="登录/账户"><span id="userNameText">登录</span><span id="coinBadge" class="coin-badge" style="display:none">🪙 <span id="coinText">0</span></span></button>
+      <button id="openHistoryBtn" class="topbar-btn" title="历史记录"><span aria-hidden="true">◷</span> 历史记录</button>
     </div>
 
   </header>
@@ -498,13 +504,14 @@
   <main class="layout">
     <!-- 左侧:类型 + 模型列表 -->
     <aside class="sidebar">
+      <div class="section-eyebrow">创作工具 <span>CREATE</span></div>
       <div class="type-tabs">
         <button class="type-tab active" data-type="image">
-          <span class="type-icon">🖼</span>
+          <span class="type-icon" aria-hidden="true">▧</span>
           <span>图片</span>
         </button>
         <button class="type-tab" data-type="video">
-          <span class="type-icon">🎬</span>
+          <span class="type-icon" aria-hidden="true">▷</span>
           <span>视频</span>
         </button>
       </div>
@@ -513,6 +520,7 @@
         <!-- 由 JS 按厂商分组渲染: 全部 + 各厂商图标 -->
       </div>
 
+      <div class="model-section-label">选择模型</div>
       <div id="modelList" class="model-list"></div>
 
       <div class="sidebar-footer">
@@ -523,14 +531,41 @@
 
     <!-- 中央:画布 + 提示语 -->
     <section class="canvas-wrap">
+      <div class="workspace-heading"><span>创作空间</span><span>从一个想法开始</span></div>
       <div class="canvas" id="canvas">
         <div class="canvas-empty" id="canvasEmpty">
-          <h1 class="canvas-title">描述画面，我来生成</h1>
-          <p class="canvas-sub">开始创作，探索无限可能</p>
+          <div class="creation-symbol" aria-hidden="true"><svg viewBox="0 0 100 100" fill="none"><rect x="17" y="23" width="66" height="54" rx="10"/><path d="m24 67 20-22 14 15 10-9 9 11"/><circle cx="65" cy="38" r="5"/><path d="M80 8v16M72 16h16"/></svg></div>
+          <div class="welcome-eyebrow">熙梦 AI · 灵感开始的地方</div>
+          <h1 class="canvas-title">把想象，变成作品。</h1>
+          <p class="canvas-sub">选一个模型，写下画面。剩下的，交给熙梦。</p>
           <div class="suggestion-chips" id="suggestionChips"></div>
         </div>
         <div class="canvas-result" id="canvasResult" hidden></div>
       </div>
+  <div class="bottom-bar">
+    <div class="prompt-collapse-wrap">
+      <button class="prompt-collapse" id="promptCollapse" title="收起输入框">⌄</button>
+    </div>
+    <div class="prompt-card">
+      <div class="composer-heading"><span>描述你的想法</span><small>支持上传参考素材 · @ 引用资产</small></div>
+      <div class="prompt-attachments" id="promptAttachments" hidden></div>
+      <div class="prompt-input-row">
+        <button class="ref-content-btn" id="attachBtn" title="添加参考内容">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+          </svg>
+        </button>
+        <button class="ref-content-btn at-btn" id="assetPickBtn" title="选择资产">
+          <span class="at-symbol">@</span>
+        </button>
+        <textarea id="prompt" aria-label="创作提示词" placeholder="描述你想创作的画面、风格与细节…" rows="1"></textarea>
+      </div>
+      <div class="prompt-params-row" id="promptParamsRow">
+        <!-- JS 动态渲染参数 pill -->
+      </div>
+    </div>
+  </div>
+
     </section>
 
     <!-- 右侧:历史面板(可收缩) -->
@@ -544,35 +579,13 @@
   </main>
 
   <!-- 底部输入栏(即梦/可灵风格:大圆角 + 下方参数 pill 行) -->
-  <div class="bottom-bar">
-    <div class="prompt-collapse-wrap">
-      <button class="prompt-collapse" id="promptCollapse" title="收起输入框">⌄</button>
-    </div>
-    <div class="prompt-card">
-      <div class="prompt-attachments" id="promptAttachments" hidden></div>
-      <div class="prompt-input-row">
-        <button class="ref-content-btn" id="attachBtn" title="添加参考内容">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-          </svg>
-        </button>
-        <button class="ref-content-btn at-btn" id="assetPickBtn" title="选择资产">
-          <span class="at-symbol">@</span>
-        </button>
-        <textarea id="prompt" placeholder="上传最多10个参考素材，输入文字描述；@参考内容、@图片1 模仿、@视频1 的动作、音色参考@音频1" rows="1"></textarea>
-      </div>
-      <div class="prompt-params-row" id="promptParamsRow">
-        <!-- JS 动态渲染参数 pill -->
-      </div>
-    </div>
-  </div>
-
   <!-- 输入框收起后, 底部中央的展开按钮 -->
   <button class="prompt-expand" id="promptExpand" hidden title="展开输入框">⌃</button>
 
   <div id="status" class="status-toast" hidden></div>
 
-  <script src="/fluid-canvas.js?v=20260908f"></script>
+
+
   <script src="/app.js?v=20260908f"></script>
 </body>
 </html>

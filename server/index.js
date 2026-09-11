@@ -1,3 +1,4 @@
+import { fetchRunninghubSchema } from '../shared/runninghub-schema.js';
 // HTTP 服务: 静态文件托管 + /api/* 代理
 import http from 'node:http';
 import fs from 'node:fs';
@@ -280,8 +281,9 @@ const server = http.createServer(async (req, res) => {
       const body = await readJsonBody(req);
       // 扣费: 登录用户按模型扣积分
       let deducted = null;
+      let cost = 0;
       if (user) {
-        const cost = coinCostFor({ type: 'image', model: body.model || body.params?.model });
+        cost = coinCostFor({ type: 'image', model: body.model || body.params?.model });
         deducted = await atomicDeductCoins(user.id, cost, body.model || '图像生成');
         if (!deducted.success) return sendErr(res, 403, deducted.error);
       }
@@ -296,6 +298,11 @@ const server = http.createServer(async (req, res) => {
         if (deducted) await refundCoins(user.id, cost, body.model || '图像生成');
         return sendErr(res, 500, e.message || '生成失败');
       }
+    }
+
+    if (url.pathname.startsWith('/api/runninghub/schema/') && req.method === 'GET') {
+      try { return sendOk(res, { schema: await fetchRunninghubSchema(url.pathname.slice('/api/runninghub/schema/'.length)) }); }
+      catch (e) { return sendErr(res, 400, e.message); }
     }
 
     if (url.pathname === '/api/generate-video' && req.method === 'POST') {
