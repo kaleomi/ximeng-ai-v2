@@ -28,7 +28,9 @@ export const SAMPLE_WORKFLOW: WorkflowJSON = {
         title: '图片生成',
         model: 'doubao-seedream-5-0-260128',
         size: '1024x1024',
-        n: 1,
+        quality: 'high',
+        count: 1,
+        prompt: '',
       },
     },
     {
@@ -38,7 +40,11 @@ export const SAMPLE_WORKFLOW: WorkflowJSON = {
       data: {
         title: '视频生成',
         model: 'doubao-seedance-2.5',
+        ratio: '16:9',
+        quality: '1080P',
         duration: 5,
+        count: 1,
+        prompt: '',
       },
     },
     {

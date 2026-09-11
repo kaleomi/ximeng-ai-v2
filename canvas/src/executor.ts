@@ -143,7 +143,9 @@ async function runImageNode(
         model: node.data.model || 'doubao-seedream-5-0-260128',
         prompt,
         size: node.data.size || '1024x1024',
-        n: node.data.n || 1,
+        quality: node.data.quality || 'auto',
+        n: node.data.count || node.data.n || 1,
+        image: node.data.image || '',
       }),
     });
     const json = await res.json();
@@ -193,11 +195,16 @@ async function runVideoNode(
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...apiAuthHeaders() },
       body: JSON.stringify({
-        model: node.data.model || 'doubao-seedance-2.5',
         prompt,
-        duration: node.data.duration || 5,
         flavor: 'ark',
-        refImage,
+        params: {
+          model: node.data.model || 'doubao-seedance-2.5',
+          duration: node.data.duration || 5,
+          ratio: node.data.ratio || '16:9',
+          quality: node.data.quality || '720P',
+          count: node.data.count || 1,
+          refImage,
+        },
       }),
     });
     const json = await res.json();
